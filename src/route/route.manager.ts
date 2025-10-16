@@ -1,18 +1,21 @@
 import { FastifyInstance } from "fastify";
 import { API_START_POINT } from "../utils/constants";
 import {
-  userRoutes,
-  prescriptionRoutes,
   webhookRoutes,
-  tokenRoutes,
+  oauth2Routes,
+  prescriptionIssueRoutes,
 } from "./index";
 
 export const routeManager = (app: FastifyInstance) => {
-  // Register all module routes
-  app.register(userRoutes, { prefix: `${API_START_POINT}users` });
-  app.register(prescriptionRoutes, {
-    prefix: `${API_START_POINT}prescriptions`,
-  });
+  // Register only the essential routes for SignatureRx integration
+  // This includes OAuth2 authentication, prescription management, and webhook handling
+  
+  // Webhook routes for receiving SignatureRx events
   app.register(webhookRoutes, { prefix: `${API_START_POINT}webhooks` });
-  app.register(tokenRoutes, { prefix: `${API_START_POINT}tokens` });
+  
+  // OAuth2 routes for SignatureRx API authentication
+  app.register(oauth2Routes, { prefix: `${API_START_POINT}auth` });
+  
+  // Prescription routes for issuing and managing prescriptions
+  app.register(prescriptionIssueRoutes, { prefix: `${API_START_POINT}prescriptions` });
 };

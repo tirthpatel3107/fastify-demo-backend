@@ -390,4 +390,57 @@ export class WebhookService {
       };
     }
   }
+
+  /**
+   * Update prescription status based on webhook event
+   */
+  static async updatePrescriptionStatus(
+    prescriptionId: string,
+    newStatus: string,
+    webhookPayload: any
+  ): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      // Import PrescriptionService here to avoid circular dependency
+      const { PrescriptionService } = await import('./prescription.service');
+      
+      // Update prescription status
+      const updateResult = await PrescriptionService.updatePrescriptionStatus(
+        prescriptionId,
+        newStatus
+      );
+
+      if (!updateResult.success) {
+        logger.error(`Failed to update prescription status: ${updateResult.error}`);
+        return {
+          success: false,
+          error: `Failed to update prescription status: ${updateResult.error}`,
+        };
+      }
+
+      // Update prescription payload with webhook data
+      const payloadUpdate = {
+        ...updateResult.data?.payload,
+        lastWebhookEvent: webhookPayload,
+        lastWebhookStatus: newStatus,
+        lastWebhookUpdate: new Date().toISOString(),
+      };
+
+      await PrescriptionService.updatePrescription(prescriptionId, {
+        payload: payloadUpdate,
+      });
+
+      logger.info(`Prescription status updated successfully: ${prescriptionId} -> ${newStatus}`);
+      
+      return {
+        success: true,
+        data: updateResult.data,
+      };
+    } catch (error) {
+      logger.error(`Error updating prescription status: ${error}`);
+      return {
+        success: false,
+        error: `Failed to update prescription status: ${error}`,
+      };
+    }
+  }
 }

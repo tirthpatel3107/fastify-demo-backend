@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { WebhookService } from "../services";
 import { WebhookLog } from "../interfaces";
 import { STATUS } from "../utils/enums";
+import logger from "../utils/logger";
 
 export class WebhookController {
   /**
@@ -277,5 +278,123 @@ export class WebhookController {
     }
 
     return reply.code(STATUS.SUCCESS).send(result);
+  }
+
+  /**
+   * Handle SignatureRx webhook events
+   * This endpoint receives webhook events from SignatureRx API
+   */
+  static async handleSignatureRxWebhook(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      // Get headers for verification
+      const headers = request.headers;
+      const authToken = headers.authorization || headers['x-api-key'];
+      
+      // Log the incoming webhook for debugging
+      logger.info('Received SignatureRx webhook', {
+        headers: {
+          'content-type': headers['content-type'],
+          'user-agent': headers['user-agent'],
+          'x-signature': headers['x-signature'],
+        },
+        body: request.body,
+      });
+
+      // Parse the webhook payload
+      const webhookPayload = request.body as any;
+      
+      if (!webhookPayload) {
+        return reply.code(STATUS.BAD_REQUEST).send({
+          success: false,
+          error: 'Empty webhook payload',
+        });
+      }
+
+      // Extract event information
+      const eventType = webhookPayload.event_type || webhookPayload.type || 'unknown';
+      const prescriptionId = webhookPayload.prescription_id || webhookPayload.id;
+      const receivedAt = new Date().toISOString();
+
+      // Create webhook log entry
+      const webhookLogData = {
+        event_type: eventType,
+        payload: webhookPayload,
+        received_at: receivedAt,
+        prescription_id: prescriptionId,
+        processed: false,
+      };
+
+      // Store webhook log
+      const webhookLog = await WebhookService.createWebhookLog(webhookLogData);
+
+      // Process the webhook event based on type
+      let prescriptionUpdateResult = null;
+      if (prescriptionId && eventType) {
+        try {
+          // Update prescription status based on event type
+          let newStatus = 'Pending';
+          switch (eventType.toLowerCase()) {
+            case 'prescription.issued':
+            case 'prescription.sent':
+              newStatus = 'Sent';
+              break;
+            case 'prescription.delivered':
+              newStatus = 'Delivered';
+              break;
+            case 'prescription.failed':
+            case 'prescription.error':
+              newStatus = 'Failed';
+              break;
+            default:
+              logger.info(`Unknown event type: ${eventType}`);
+          }
+
+          // Update prescription status if we have a valid prescription ID
+          if (newStatus !== 'Pending') {
+            prescriptionUpdateResult = await WebhookService.updatePrescriptionStatus(
+              prescriptionId,
+              newStatus,
+              webhookPayload
+            );
+          }
+        } catch (updateError) {
+          logger.error(`Failed to update prescription status: ${updateError}`);
+          // Don't fail the webhook, just log the error
+        }
+      }
+
+      // Mark webhook as processed
+      if (webhookLog) {
+        await WebhookService.markWebhookLogAsProcessed(webhookLog.id);
+      }
+
+      logger.info(`SignatureRx webhook processed successfully: ${eventType}`, {
+        webhookLogId: webhookLog?.id,
+        prescriptionId,
+        prescriptionUpdated: !!prescriptionUpdateResult,
+      });
+
+      // Return 200 OK to SignatureRx
+      return reply.code(STATUS.SUCCESS).send({
+        success: true,
+        message: 'Webhook received and processed successfully',
+        event_type: eventType,
+        processed: true,
+      });
+
+    } catch (error: any) {
+      logger.error(`Error processing SignatureRx webhook: ${error.message}`, {
+        error: error.stack,
+        body: request.body,
+      });
+
+      // Still return 200 OK to prevent SignatureRx from retrying
+      // Log the error for manual investigation
+      return reply.code(STATUS.SUCCESS).send({
+        success: false,
+        error: 'Webhook processing failed but acknowledged',
+        message: 'Error logged for investigation',
+      });
+    }
   }
 }

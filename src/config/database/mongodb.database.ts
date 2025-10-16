@@ -4,16 +4,14 @@ import type { FastifyInstance, FastifyPluginCallback } from "fastify";
 import logger from "../../utils/logger";
 
 const connectToDb: FastifyPluginCallback = async (
-  _fastify: FastifyInstance,
+  fastify: FastifyInstance,
   _options: Record<string, any>,
   done: (err?: Error | undefined) => void,
 ) => {
   try {
     logger.info("Initializing MongoDB connection...");
 
-    await mongoose.connect(process.env["MONGODB_URI"]!, {
-      dbName: process.env["MONGODB_DATABASE_NAME"]!,
-    });
+    await mongoose.connect(fastify.config.MONGODB_URI);
 
     logger.info("✅ MongoDB connected successfully");
     done();

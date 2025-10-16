@@ -3,7 +3,10 @@ import logger from "./utils/logger";
 
 const start = async () => {
   try {
-    const PORT = process.env["PORT"] || 3000;
+    // Wait for the app to be ready so that plugins are registered
+    await app.ready();
+    
+    const PORT = app.config.PORT || 3000;
 
     await app.listen({ port: Number(PORT) });
     logger.info(`🚀 Server is working on PORT: ${PORT}`);

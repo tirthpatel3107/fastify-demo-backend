@@ -1,16 +1,19 @@
-import dotenv from "dotenv";
-dotenv.config(); // Set env file
-
 import Fastify from "fastify";
 import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyCors from "@fastify/cors";
+import { buildFastifyEnvPlugin } from "./config/env.config";
 import { connectToMongoDB } from "./config/database/mongodb.database";
-// import { routeManager } from "./route/route.manager";
+import { routeManager } from "./route/route.manager";
 import { AppError, createErrorResponse } from "./utils/errorHandler";
 import { STATUS } from "./utils/enums";
 
+// Fastify application for SignatureRx prescription management system
+// This backend handles OAuth2 authentication, prescription issuing, and webhook processing
 const app = Fastify({ logger: true });
+
+// Register environment configuration plugin
+app.register(buildFastifyEnvPlugin);
 
 // Register security plugins
 app.register(fastifyHelmet);
@@ -26,7 +29,7 @@ app.register(fastifyCors, {
 app.register(connectToMongoDB);
 
 // Importing Routes
-// routeManager(app);
+routeManager(app);
 
 // Global error handler
 app.setErrorHandler((error, _request, reply) => {
