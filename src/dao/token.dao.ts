@@ -1,11 +1,13 @@
-import { TokenModel, TokenDocument } from '../models';
-import { Token } from '../interfaces';
+import { TokenModel, TokenDocument } from "../models";
+import { Token } from "../interfaces";
 
 export class TokenDAO {
   /**
    * Create a new token
    */
-  static async create(tokenData: Omit<Token, 'id' | 'created_at' | 'updated_at'>): Promise<TokenDocument> {
+  static async create(
+    tokenData: Omit<Token, "id" | "created_at" | "updated_at">,
+  ): Promise<TokenDocument> {
     try {
       const token = new TokenModel(tokenData);
       return await token.save();
@@ -28,7 +30,9 @@ export class TokenDAO {
   /**
    * Get token by access token
    */
-  static async getByAccessToken(accessToken: string): Promise<TokenDocument | null> {
+  static async getByAccessToken(
+    accessToken: string,
+  ): Promise<TokenDocument | null> {
     try {
       return await TokenModel.findOne({ access_token: accessToken });
     } catch (error) {
@@ -39,7 +43,9 @@ export class TokenDAO {
   /**
    * Get token by refresh token
    */
-  static async getByRefreshToken(refreshToken: string): Promise<TokenDocument | null> {
+  static async getByRefreshToken(
+    refreshToken: string,
+  ): Promise<TokenDocument | null> {
     try {
       return await TokenModel.findOne({ refresh_token: refreshToken });
     } catch (error) {
@@ -52,7 +58,9 @@ export class TokenDAO {
    */
   static async getByUserId(userId: string): Promise<TokenDocument[]> {
     try {
-      return await TokenModel.find({ user_id: userId }).sort({ created_at: -1 });
+      return await TokenModel.find({ user_id: userId }).sort({
+        created_at: -1,
+      });
     } catch (error) {
       throw new Error(`Failed to get tokens by user ID: ${error}`);
     }
@@ -61,12 +69,15 @@ export class TokenDAO {
   /**
    * Update token by ID
    */
-  static async updateById(id: string, updateData: Partial<Token>): Promise<TokenDocument | null> {
+  static async updateById(
+    id: string,
+    updateData: Partial<Token>,
+  ): Promise<TokenDocument | null> {
     try {
       return await TokenModel.findByIdAndUpdate(
         id,
         { ...updateData, updated_at: new Date() },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
     } catch (error) {
       throw new Error(`Failed to update token: ${error}`);

@@ -1,10 +1,10 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { 
-  AppError, 
-  handleMongoError, 
-  handleJWTError, 
+import {
+  AppError,
+  handleMongoError,
+  handleJWTError,
   handleValidationError,
-  createErrorResponse 
+  createErrorResponse,
 } from "./errorHandler";
 import { STATUS } from "./enums";
 
@@ -13,7 +13,7 @@ import { STATUS } from "./enums";
  * This eliminates the need for try-catch blocks in every route handler
  */
 export const catchAsync = (
-  fn: (request: FastifyRequest, reply: FastifyReply) => Promise<any>
+  fn: (request: FastifyRequest, reply: FastifyReply) => Promise<any>,
 ) => {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -26,12 +26,15 @@ export const catchAsync = (
       if (error.name === "CastError" || error.code === 11000) {
         processedError = handleMongoError(error);
       }
-      
+
       // Handle JWT errors
-      if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      if (
+        error.name === "JsonWebTokenError" ||
+        error.name === "TokenExpiredError"
+      ) {
         processedError = handleJWTError(error);
       }
-      
+
       // Handle validation errors
       if (error.name === "ValidationError") {
         processedError = handleValidationError(error);
@@ -39,10 +42,13 @@ export const catchAsync = (
 
       // Create error response
       const errorResponse = createErrorResponse(processedError);
-      
+
       // Send error response with appropriate status code
-      const statusCode = processedError instanceof AppError ? processedError.statusCode : STATUS.SERVER_ERROR;
-      
+      const statusCode =
+        processedError instanceof AppError
+          ? processedError.statusCode
+          : STATUS.SERVER_ERROR;
+
       return reply.code(statusCode).send(errorResponse);
     }
   };

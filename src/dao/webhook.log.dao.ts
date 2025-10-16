@@ -1,11 +1,13 @@
-import { WebhookLogModel, WebhookLogDocument } from '../models';
-import { WebhookLog } from '../interfaces';
+import { WebhookLogModel, WebhookLogDocument } from "../models";
+import { WebhookLog } from "../interfaces";
 
 export class WebhookLogDAO {
   /**
    * Create a new webhook log
    */
-  static async create(webhookData: Omit<WebhookLog, 'id' | 'created_at' | 'updated_at'>): Promise<WebhookLogDocument> {
+  static async create(
+    webhookData: Omit<WebhookLog, "id" | "created_at" | "updated_at">,
+  ): Promise<WebhookLogDocument> {
     try {
       const webhookLog = new WebhookLogModel(webhookData);
       return await webhookLog.save();
@@ -28,12 +30,15 @@ export class WebhookLogDAO {
   /**
    * Update webhook log by ID
    */
-  static async updateById(id: string, updateData: Partial<WebhookLog>): Promise<WebhookLogDocument | null> {
+  static async updateById(
+    id: string,
+    updateData: Partial<WebhookLog>,
+  ): Promise<WebhookLogDocument | null> {
     try {
       return await WebhookLogModel.findByIdAndUpdate(
         id,
         { ...updateData, updated_at: new Date() },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
     } catch (error) {
       throw new Error(`Failed to update webhook log: ${error}`);
@@ -55,21 +60,31 @@ export class WebhookLogDAO {
   /**
    * Get webhook logs by prescription ID
    */
-  static async getByPrescriptionId(prescriptionId: string, limit: number = 10, skip: number = 0): Promise<WebhookLogDocument[]> {
+  static async getByPrescriptionId(
+    prescriptionId: string,
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<WebhookLogDocument[]> {
     try {
       return await WebhookLogModel.find({ prescription_id: prescriptionId })
         .limit(limit)
         .skip(skip)
         .sort({ created_at: -1 });
     } catch (error) {
-      throw new Error(`Failed to get webhook logs by prescription ID: ${error}`);
+      throw new Error(
+        `Failed to get webhook logs by prescription ID: ${error}`,
+      );
     }
   }
 
   /**
    * Get webhook logs by event type
    */
-  static async getByEventType(eventType: string, limit: number = 10, skip: number = 0): Promise<WebhookLogDocument[]> {
+  static async getByEventType(
+    eventType: string,
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<WebhookLogDocument[]> {
     try {
       return await WebhookLogModel.find({ event_type: eventType })
         .limit(limit)
@@ -83,7 +98,10 @@ export class WebhookLogDAO {
   /**
    * Get unprocessed webhook logs
    */
-  static async getUnprocessed(limit: number = 10, skip: number = 0): Promise<WebhookLogDocument[]> {
+  static async getUnprocessed(
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<WebhookLogDocument[]> {
     try {
       return await WebhookLogModel.find({ processed: false })
         .limit(limit)
@@ -97,7 +115,10 @@ export class WebhookLogDAO {
   /**
    * Get all webhook logs with pagination
    */
-  static async getAll(limit: number = 10, skip: number = 0): Promise<WebhookLogDocument[]> {
+  static async getAll(
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<WebhookLogDocument[]> {
     try {
       return await WebhookLogModel.find()
         .limit(limit)
@@ -111,7 +132,10 @@ export class WebhookLogDAO {
   /**
    * Get webhook logs count
    */
-  static async getCount(filters?: { processed?: boolean; event_type?: string }): Promise<number> {
+  static async getCount(filters?: {
+    processed?: boolean;
+    event_type?: string;
+  }): Promise<number> {
     try {
       const filter = filters || {};
       return await WebhookLogModel.countDocuments(filter);
@@ -123,22 +147,24 @@ export class WebhookLogDAO {
   /**
    * Mark webhook log as processed
    */
-  static async markAsProcessed(id: string, errorMessage?: string): Promise<WebhookLogDocument | null> {
+  static async markAsProcessed(
+    id: string,
+    errorMessage?: string,
+  ): Promise<WebhookLogDocument | null> {
     try {
       const updateData: Partial<WebhookLog> = {
         processed: true,
-        updated_at: new Date()
+        updated_at: new Date(),
       };
-      
+
       if (errorMessage) {
         updateData.error_message = errorMessage;
       }
 
-      return await WebhookLogModel.findByIdAndUpdate(
-        id,
-        updateData,
-        { new: true, runValidators: true }
-      );
+      return await WebhookLogModel.findByIdAndUpdate(id, updateData, {
+        new: true,
+        runValidators: true,
+      });
     } catch (error) {
       throw new Error(`Failed to mark webhook log as processed: ${error}`);
     }
@@ -151,12 +177,12 @@ export class WebhookLogDAO {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-      
+
       const result = await WebhookLogModel.deleteMany({
         processed: true,
-        created_at: { $lt: cutoffDate }
+        created_at: { $lt: cutoffDate },
       });
-      
+
       return result.deletedCount || 0;
     } catch (error) {
       throw new Error(`Failed to cleanup old webhook logs: ${error}`);

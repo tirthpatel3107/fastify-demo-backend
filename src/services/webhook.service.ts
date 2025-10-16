@@ -1,7 +1,7 @@
-import { WebhookLogDAO } from '../dao';
-import { WebhookLog, WebhookResponse } from '../interfaces';
-import { WebhookLogDocument } from '../models';
-import logger from '../utils/logger';
+import { WebhookLogDAO } from "../dao";
+import { WebhookLog, WebhookResponse } from "../interfaces";
+import { WebhookLogDocument } from "../models";
+import logger from "../utils/logger";
 
 // Helper function to convert WebhookLogDocument to WebhookLog
 const convertToWebhookLog = (doc: WebhookLogDocument): WebhookLog => ({
@@ -13,14 +13,16 @@ const convertToWebhookLog = (doc: WebhookLogDocument): WebhookLog => ({
   processed: doc.processed,
   error_message: doc.error_message || undefined,
   created_at: doc.created_at,
-  updated_at: doc.updated_at
+  updated_at: doc.updated_at,
 });
 
 export class WebhookService {
   /**
    * Create a new webhook log
    */
-  static async createWebhookLog(webhookData: Omit<WebhookLog, 'id' | 'created_at' | 'updated_at'>): Promise<WebhookResponse> {
+  static async createWebhookLog(
+    webhookData: Omit<WebhookLog, "id" | "created_at" | "updated_at">,
+  ): Promise<WebhookResponse> {
     try {
       const webhookLog = await WebhookLogDAO.create(webhookData);
       logger.info(`Webhook log created successfully: ${webhookLog.id}`);
@@ -28,13 +30,13 @@ export class WebhookService {
       return {
         success: true,
         data: convertToWebhookLog(webhookLog),
-        message: 'Webhook log created successfully'
+        message: "Webhook log created successfully",
       };
     } catch (error) {
       logger.error(`Error creating webhook log: ${error}`);
       return {
         success: false,
-        error: `Failed to create webhook log: ${error}`
+        error: `Failed to create webhook log: ${error}`,
       };
     }
   }
@@ -48,20 +50,20 @@ export class WebhookService {
       if (!webhookLog) {
         return {
           success: false,
-          error: 'Webhook log not found'
+          error: "Webhook log not found",
         };
       }
 
       return {
         success: true,
         data: convertToWebhookLog(webhookLog),
-        message: 'Webhook log retrieved successfully'
+        message: "Webhook log retrieved successfully",
       };
     } catch (error) {
       logger.error(`Error getting webhook log by ID: ${error}`);
       return {
         success: false,
-        error: `Failed to get webhook log: ${error}`
+        error: `Failed to get webhook log: ${error}`,
       };
     }
   }
@@ -69,13 +71,16 @@ export class WebhookService {
   /**
    * Update webhook log
    */
-  static async updateWebhookLog(id: string, updateData: Partial<WebhookLog>): Promise<WebhookResponse> {
+  static async updateWebhookLog(
+    id: string,
+    updateData: Partial<WebhookLog>,
+  ): Promise<WebhookResponse> {
     try {
       const webhookLog = await WebhookLogDAO.updateById(id, updateData);
       if (!webhookLog) {
         return {
           success: false,
-          error: 'Webhook log not found'
+          error: "Webhook log not found",
         };
       }
 
@@ -83,13 +88,13 @@ export class WebhookService {
       return {
         success: true,
         data: convertToWebhookLog(webhookLog),
-        message: 'Webhook log updated successfully'
+        message: "Webhook log updated successfully",
       };
     } catch (error) {
       logger.error(`Error updating webhook log: ${error}`);
       return {
         success: false,
-        error: `Failed to update webhook log: ${error}`
+        error: `Failed to update webhook log: ${error}`,
       };
     }
   }
@@ -103,20 +108,20 @@ export class WebhookService {
       if (!result) {
         return {
           success: false,
-          error: 'Webhook log not found'
+          error: "Webhook log not found",
         };
       }
 
       logger.info(`Webhook log deleted successfully: ${id}`);
       return {
         success: true,
-        message: 'Webhook log deleted successfully'
+        message: "Webhook log deleted successfully",
       };
     } catch (error) {
       logger.error(`Error deleting webhook log: ${error}`);
       return {
         success: false,
-        error: `Failed to delete webhook log: ${error}`
+        error: `Failed to delete webhook log: ${error}`,
       };
     }
   }
@@ -125,24 +130,33 @@ export class WebhookService {
    * Get webhook logs by prescription ID
    */
   static async getWebhookLogsByPrescription(
-    prescriptionId: string, 
-    limit: number = 10, 
-    skip: number = 0
-  ): Promise<{ success: boolean; data?: WebhookLog[]; total?: number; error?: string }> {
+    prescriptionId: string,
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<{
+    success: boolean;
+    data?: WebhookLog[];
+    total?: number;
+    error?: string;
+  }> {
     try {
-      const webhookLogs = await WebhookLogDAO.getByPrescriptionId(prescriptionId, limit, skip);
+      const webhookLogs = await WebhookLogDAO.getByPrescriptionId(
+        prescriptionId,
+        limit,
+        skip,
+      );
       const total = webhookLogs.length; // Simplified count
 
       return {
         success: true,
-        data: webhookLogs.map(webhookLog => convertToWebhookLog(webhookLog)),
-        total
+        data: webhookLogs.map((webhookLog) => convertToWebhookLog(webhookLog)),
+        total,
       };
     } catch (error) {
       logger.error(`Error getting webhook logs by prescription: ${error}`);
       return {
         success: false,
-        error: `Failed to get webhook logs: ${error}`
+        error: `Failed to get webhook logs: ${error}`,
       };
     }
   }
@@ -151,24 +165,33 @@ export class WebhookService {
    * Get webhook logs by event type
    */
   static async getWebhookLogsByEventType(
-    eventType: string, 
-    limit: number = 10, 
-    skip: number = 0
-  ): Promise<{ success: boolean; data?: WebhookLog[]; total?: number; error?: string }> {
+    eventType: string,
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<{
+    success: boolean;
+    data?: WebhookLog[];
+    total?: number;
+    error?: string;
+  }> {
     try {
-      const webhookLogs = await WebhookLogDAO.getByEventType(eventType, limit, skip);
+      const webhookLogs = await WebhookLogDAO.getByEventType(
+        eventType,
+        limit,
+        skip,
+      );
       const total = webhookLogs.length; // Simplified count
 
       return {
         success: true,
-        data: webhookLogs.map(webhookLog => convertToWebhookLog(webhookLog)),
-        total
+        data: webhookLogs.map((webhookLog) => convertToWebhookLog(webhookLog)),
+        total,
       };
     } catch (error) {
       logger.error(`Error getting webhook logs by event type: ${error}`);
       return {
         success: false,
-        error: `Failed to get webhook logs: ${error}`
+        error: `Failed to get webhook logs: ${error}`,
       };
     }
   }
@@ -177,23 +200,28 @@ export class WebhookService {
    * Get unprocessed webhook logs
    */
   static async getUnprocessedWebhookLogs(
-    limit: number = 10, 
-    skip: number = 0
-  ): Promise<{ success: boolean; data?: WebhookLog[]; total?: number; error?: string }> {
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<{
+    success: boolean;
+    data?: WebhookLog[];
+    total?: number;
+    error?: string;
+  }> {
     try {
       const webhookLogs = await WebhookLogDAO.getUnprocessed(limit, skip);
       const total = webhookLogs.length; // Simplified count
 
       return {
         success: true,
-        data: webhookLogs.map(webhookLog => convertToWebhookLog(webhookLog)),
-        total
+        data: webhookLogs.map((webhookLog) => convertToWebhookLog(webhookLog)),
+        total,
       };
     } catch (error) {
       logger.error(`Error getting unprocessed webhook logs: ${error}`);
       return {
         success: false,
-        error: `Failed to get unprocessed webhook logs: ${error}`
+        error: `Failed to get unprocessed webhook logs: ${error}`,
       };
     }
   }
@@ -202,25 +230,30 @@ export class WebhookService {
    * Get all webhook logs with pagination
    */
   static async getAllWebhookLogs(
-    limit: number = 10, 
-    skip: number = 0
-  ): Promise<{ success: boolean; data?: WebhookLog[]; total?: number; error?: string }> {
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<{
+    success: boolean;
+    data?: WebhookLog[];
+    total?: number;
+    error?: string;
+  }> {
     try {
       const [webhookLogs, total] = await Promise.all([
         WebhookLogDAO.getAll(limit, skip),
-        WebhookLogDAO.getCount()
+        WebhookLogDAO.getCount(),
       ]);
 
       return {
         success: true,
-        data: webhookLogs.map(webhookLog => convertToWebhookLog(webhookLog)),
-        total
+        data: webhookLogs.map((webhookLog) => convertToWebhookLog(webhookLog)),
+        total,
       };
     } catch (error) {
       logger.error(`Error getting all webhook logs: ${error}`);
       return {
         success: false,
-        error: `Failed to get webhook logs: ${error}`
+        error: `Failed to get webhook logs: ${error}`,
       };
     }
   }
@@ -229,15 +262,15 @@ export class WebhookService {
    * Mark webhook log as processed
    */
   static async markWebhookLogAsProcessed(
-    id: string, 
-    errorMessage?: string
+    id: string,
+    errorMessage?: string,
   ): Promise<WebhookResponse> {
     try {
       const webhookLog = await WebhookLogDAO.markAsProcessed(id, errorMessage);
       if (!webhookLog) {
         return {
           success: false,
-          error: 'Webhook log not found'
+          error: "Webhook log not found",
         };
       }
 
@@ -245,13 +278,13 @@ export class WebhookService {
       return {
         success: true,
         data: convertToWebhookLog(webhookLog),
-        message: 'Webhook log marked as processed'
+        message: "Webhook log marked as processed",
       };
     } catch (error) {
       logger.error(`Error marking webhook log as processed: ${error}`);
       return {
         success: false,
-        error: `Failed to mark webhook log as processed: ${error}`
+        error: `Failed to mark webhook log as processed: ${error}`,
       };
     }
   }
@@ -260,22 +293,23 @@ export class WebhookService {
    * Process webhook event
    */
   static async processWebhookEvent(
-    eventType: string, 
-    payload: object, 
-    prescriptionId?: string
+    eventType: string,
+    payload: object,
+    prescriptionId?: string,
   ): Promise<WebhookResponse> {
     try {
       // Create webhook log entry
-      const webhookData: Omit<WebhookLog, "id" | "created_at" | "updated_at"> = {
-        event_type: eventType,
-        payload,
-        received_at: new Date().toISOString(),
-        prescription_id: prescriptionId || undefined,
-        processed: false
-      };
+      const webhookData: Omit<WebhookLog, "id" | "created_at" | "updated_at"> =
+        {
+          event_type: eventType,
+          payload,
+          received_at: new Date().toISOString(),
+          prescription_id: prescriptionId || undefined,
+          processed: false,
+        };
 
       const result = await this.createWebhookLog(webhookData);
-      
+
       if (!result.success) {
         return result;
       }
@@ -285,14 +319,16 @@ export class WebhookService {
       logger.info(`Processing webhook event: ${eventType}`);
 
       // Mark as processed (you might want to do this after actual processing)
-      const processedResult = await this.markWebhookLogAsProcessed(result.data!.id);
+      const processedResult = await this.markWebhookLogAsProcessed(
+        result.data!.id,
+      );
 
       return processedResult;
     } catch (error) {
       logger.error(`Error processing webhook event: ${error}`);
       return {
         success: false,
-        error: `Failed to process webhook event: ${error}`
+        error: `Failed to process webhook event: ${error}`,
       };
     }
   }
@@ -300,20 +336,22 @@ export class WebhookService {
   /**
    * Clean up old webhook logs
    */
-  static async cleanupOldWebhookLogs(daysOld: number = 30): Promise<{ success: boolean; deletedCount?: number; error?: string }> {
+  static async cleanupOldWebhookLogs(
+    daysOld: number = 30,
+  ): Promise<{ success: boolean; deletedCount?: number; error?: string }> {
     try {
       const deletedCount = await WebhookLogDAO.cleanupOldLogs(daysOld);
       logger.info(`Cleaned up ${deletedCount} old webhook logs`);
 
       return {
         success: true,
-        deletedCount
+        deletedCount,
       };
     } catch (error) {
       logger.error(`Error cleaning up webhook logs: ${error}`);
       return {
         success: false,
-        error: `Failed to cleanup webhook logs: ${error}`
+        error: `Failed to cleanup webhook logs: ${error}`,
       };
     }
   }
@@ -321,30 +359,34 @@ export class WebhookService {
   /**
    * Get webhook statistics
    */
-  static async getWebhookStats(): Promise<{ success: boolean; data?: any; error?: string }> {
+  static async getWebhookStats(): Promise<{
+    success: boolean;
+    data?: any;
+    error?: string;
+  }> {
     try {
       const [total, processed, unprocessed] = await Promise.all([
         WebhookLogDAO.getCount(),
         WebhookLogDAO.getCount({ processed: true }),
-        WebhookLogDAO.getCount({ processed: false })
+        WebhookLogDAO.getCount({ processed: false }),
       ]);
 
       const stats = {
         total,
         processed,
         unprocessed,
-        processing_rate: total > 0 ? (processed / total) * 100 : 0
+        processing_rate: total > 0 ? (processed / total) * 100 : 0,
       };
 
       return {
         success: true,
-        data: stats
+        data: stats,
       };
     } catch (error) {
       logger.error(`Error getting webhook stats: ${error}`);
       return {
         success: false,
-        error: `Failed to get webhook statistics: ${error}`
+        error: `Failed to get webhook statistics: ${error}`,
       };
     }
   }

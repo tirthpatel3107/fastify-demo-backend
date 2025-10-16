@@ -1,12 +1,12 @@
-import { PrescriptionDAO, UserDAO } from '../dao';
-import { 
-  Prescription, 
-  CreatePrescriptionRequest, 
-  UpdatePrescriptionData, 
-  PrescriptionResponse 
-} from '../interfaces';
-import { PrescriptionDocument } from '../models';
-import logger from '../utils/logger';
+import { PrescriptionDAO, UserDAO } from "../dao";
+import {
+  Prescription,
+  CreatePrescriptionRequest,
+  UpdatePrescriptionData,
+  PrescriptionResponse,
+} from "../interfaces";
+import { PrescriptionDocument } from "../models";
+import logger from "../utils/logger";
 
 // Helper function to convert PrescriptionDocument to Prescription
 const convertToPrescription = (doc: PrescriptionDocument): Prescription => ({
@@ -21,21 +21,26 @@ const convertToPrescription = (doc: PrescriptionDocument): Prescription => ({
   payload: doc.payload,
   status: doc.status,
   created_at: doc.created_at,
-  updated_at: doc.updated_at
+  updated_at: doc.updated_at,
 });
 
 export class PrescriptionService {
   /**
    * Create a new prescription
    */
-  static async createPrescription(prescriptionData: CreatePrescriptionRequest): Promise<PrescriptionResponse> {
+  static async createPrescription(
+    prescriptionData: CreatePrescriptionRequest,
+  ): Promise<PrescriptionResponse> {
     try {
       // Validate doctor exists and is authorized
       const isDoctorValid = await UserDAO.getById(prescriptionData.doctor_id);
-      if (!isDoctorValid || (isDoctorValid.role !== 'doctor' && isDoctorValid.role !== 'admin')) {
+      if (
+        !isDoctorValid ||
+        (isDoctorValid.role !== "doctor" && isDoctorValid.role !== "admin")
+      ) {
         return {
           success: false,
-          error: 'Invalid or unauthorized doctor'
+          error: "Invalid or unauthorized doctor",
         };
       }
 
@@ -46,13 +51,13 @@ export class PrescriptionService {
       return {
         success: true,
         data: convertToPrescription(prescription),
-        message: 'Prescription created successfully'
+        message: "Prescription created successfully",
       };
     } catch (error) {
       logger.error(`Error creating prescription: ${error}`);
       return {
         success: false,
-        error: `Failed to create prescription: ${error}`
+        error: `Failed to create prescription: ${error}`,
       };
     }
   }
@@ -66,20 +71,20 @@ export class PrescriptionService {
       if (!prescription) {
         return {
           success: false,
-          error: 'Prescription not found'
+          error: "Prescription not found",
         };
       }
 
       return {
         success: true,
         data: convertToPrescription(prescription),
-        message: 'Prescription retrieved successfully'
+        message: "Prescription retrieved successfully",
       };
     } catch (error) {
       logger.error(`Error getting prescription by ID: ${error}`);
       return {
         success: false,
-        error: `Failed to get prescription: ${error}`
+        error: `Failed to get prescription: ${error}`,
       };
     }
   }
@@ -87,13 +92,16 @@ export class PrescriptionService {
   /**
    * Update prescription
    */
-  static async updatePrescription(id: string, updateData: UpdatePrescriptionData): Promise<PrescriptionResponse> {
+  static async updatePrescription(
+    id: string,
+    updateData: UpdatePrescriptionData,
+  ): Promise<PrescriptionResponse> {
     try {
       const prescription = await PrescriptionDAO.updateById(id, updateData);
       if (!prescription) {
         return {
           success: false,
-          error: 'Prescription not found'
+          error: "Prescription not found",
         };
       }
 
@@ -101,13 +109,13 @@ export class PrescriptionService {
       return {
         success: true,
         data: convertToPrescription(prescription),
-        message: 'Prescription updated successfully'
+        message: "Prescription updated successfully",
       };
     } catch (error) {
       logger.error(`Error updating prescription: ${error}`);
       return {
         success: false,
-        error: `Failed to update prescription: ${error}`
+        error: `Failed to update prescription: ${error}`,
       };
     }
   }
@@ -121,20 +129,20 @@ export class PrescriptionService {
       if (!result) {
         return {
           success: false,
-          error: 'Prescription not found'
+          error: "Prescription not found",
         };
       }
 
       logger.info(`Prescription deleted successfully: ${id}`);
       return {
         success: true,
-        message: 'Prescription deleted successfully'
+        message: "Prescription deleted successfully",
       };
     } catch (error) {
       logger.error(`Error deleting prescription: ${error}`);
       return {
         success: false,
-        error: `Failed to delete prescription: ${error}`
+        error: `Failed to delete prescription: ${error}`,
       };
     }
   }
@@ -143,26 +151,31 @@ export class PrescriptionService {
    * Get prescriptions by doctor ID
    */
   static async getPrescriptionsByDoctor(
-    doctorId: string, 
-    limit: number = 10, 
-    skip: number = 0
-  ): Promise<{ success: boolean; data?: Prescription[]; total?: number; error?: string }> {
+    doctorId: string,
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<{
+    success: boolean;
+    data?: Prescription[];
+    total?: number;
+    error?: string;
+  }> {
     try {
       const [prescriptions, total] = await Promise.all([
         PrescriptionDAO.getByDoctorId(doctorId, limit, skip),
-        PrescriptionDAO.getCount({ doctor_id: doctorId })
+        PrescriptionDAO.getCount({ doctor_id: doctorId }),
       ]);
 
       return {
         success: true,
         data: prescriptions.map(convertToPrescription),
-        total
+        total,
       };
     } catch (error) {
       logger.error(`Error getting prescriptions by doctor: ${error}`);
       return {
         success: false,
-        error: `Failed to get prescriptions: ${error}`
+        error: `Failed to get prescriptions: ${error}`,
       };
     }
   }
@@ -171,26 +184,31 @@ export class PrescriptionService {
    * Get prescriptions by status
    */
   static async getPrescriptionsByStatus(
-    status: "Pending" | "Sent" | "Delivered" | "Failed", 
-    limit: number = 10, 
-    skip: number = 0
-  ): Promise<{ success: boolean; data?: Prescription[]; total?: number; error?: string }> {
+    status: "Pending" | "Sent" | "Delivered" | "Failed",
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<{
+    success: boolean;
+    data?: Prescription[];
+    total?: number;
+    error?: string;
+  }> {
     try {
       const [prescriptions, total] = await Promise.all([
         PrescriptionDAO.getByStatus(status, limit, skip),
-        PrescriptionDAO.getCount({ status })
+        PrescriptionDAO.getCount({ status }),
       ]);
 
       return {
         success: true,
         data: prescriptions.map(convertToPrescription),
-        total
+        total,
       };
     } catch (error) {
       logger.error(`Error getting prescriptions by status: ${error}`);
       return {
         success: false,
-        error: `Failed to get prescriptions: ${error}`
+        error: `Failed to get prescriptions: ${error}`,
       };
     }
   }
@@ -199,25 +217,34 @@ export class PrescriptionService {
    * Search prescriptions by patient name
    */
   static async searchPrescriptionsByPatient(
-    patientName: string, 
-    limit: number = 10, 
-    skip: number = 0
-  ): Promise<{ success: boolean; data?: Prescription[]; total?: number; error?: string }> {
+    patientName: string,
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<{
+    success: boolean;
+    data?: Prescription[];
+    total?: number;
+    error?: string;
+  }> {
     try {
-      const prescriptions = await PrescriptionDAO.getByPatientName(patientName, limit, skip);
+      const prescriptions = await PrescriptionDAO.getByPatientName(
+        patientName,
+        limit,
+        skip,
+      );
       // Note: Mongoose doesn't support count with regex in a simple way, so we'll use the length
       const total = prescriptions.length;
 
       return {
         success: true,
         data: prescriptions.map(convertToPrescription),
-        total
+        total,
       };
     } catch (error) {
       logger.error(`Error searching prescriptions by patient: ${error}`);
       return {
         success: false,
-        error: `Failed to search prescriptions: ${error}`
+        error: `Failed to search prescriptions: ${error}`,
       };
     }
   }
@@ -226,25 +253,30 @@ export class PrescriptionService {
    * Get all prescriptions with pagination
    */
   static async getAllPrescriptions(
-    limit: number = 10, 
-    skip: number = 0
-  ): Promise<{ success: boolean; data?: Prescription[]; total?: number; error?: string }> {
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<{
+    success: boolean;
+    data?: Prescription[];
+    total?: number;
+    error?: string;
+  }> {
     try {
       const [prescriptions, total] = await Promise.all([
         PrescriptionDAO.getAll(limit, skip),
-        PrescriptionDAO.getCount()
+        PrescriptionDAO.getCount(),
       ]);
 
       return {
         success: true,
         data: prescriptions.map(convertToPrescription),
-        total
+        total,
       };
     } catch (error) {
       logger.error(`Error getting all prescriptions: ${error}`);
       return {
         success: false,
-        error: `Failed to get prescriptions: ${error}`
+        error: `Failed to get prescriptions: ${error}`,
       };
     }
   }
@@ -253,15 +285,15 @@ export class PrescriptionService {
    * Update prescription status
    */
   static async updatePrescriptionStatus(
-    id: string, 
-    status: "Pending" | "Sent" | "Delivered" | "Failed"
+    id: string,
+    status: "Pending" | "Sent" | "Delivered" | "Failed",
   ): Promise<PrescriptionResponse> {
     try {
       const prescription = await PrescriptionDAO.updateStatus(id, status);
       if (!prescription) {
         return {
           success: false,
-          error: 'Prescription not found'
+          error: "Prescription not found",
         };
       }
 
@@ -269,13 +301,13 @@ export class PrescriptionService {
       return {
         success: true,
         data: convertToPrescription(prescription),
-        message: `Prescription status updated to ${status}`
+        message: `Prescription status updated to ${status}`,
       };
     } catch (error) {
       logger.error(`Error updating prescription status: ${error}`);
       return {
         success: false,
-        error: `Failed to update prescription status: ${error}`
+        error: `Failed to update prescription status: ${error}`,
       };
     }
   }
@@ -283,14 +315,18 @@ export class PrescriptionService {
   /**
    * Get prescription statistics
    */
-  static async getPrescriptionStats(): Promise<{ success: boolean; data?: any; error?: string }> {
+  static async getPrescriptionStats(): Promise<{
+    success: boolean;
+    data?: any;
+    error?: string;
+  }> {
     try {
       const [total, pending, sent, delivered, failed] = await Promise.all([
         PrescriptionDAO.getCount(),
-        PrescriptionDAO.getCount({ status: 'Pending' }),
-        PrescriptionDAO.getCount({ status: 'Sent' }),
-        PrescriptionDAO.getCount({ status: 'Delivered' }),
-        PrescriptionDAO.getCount({ status: 'Failed' })
+        PrescriptionDAO.getCount({ status: "Pending" }),
+        PrescriptionDAO.getCount({ status: "Sent" }),
+        PrescriptionDAO.getCount({ status: "Delivered" }),
+        PrescriptionDAO.getCount({ status: "Failed" }),
       ]);
 
       const stats = {
@@ -299,19 +335,19 @@ export class PrescriptionService {
           pending,
           sent,
           delivered,
-          failed
-        }
+          failed,
+        },
       };
 
       return {
         success: true,
-        data: stats
+        data: stats,
       };
     } catch (error) {
       logger.error(`Error getting prescription stats: ${error}`);
       return {
         success: false,
-        error: `Failed to get prescription statistics: ${error}`
+        error: `Failed to get prescription statistics: ${error}`,
       };
     }
   }

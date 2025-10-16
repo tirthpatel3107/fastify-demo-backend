@@ -53,14 +53,15 @@ export const handleValidationError = (error: any): AppError => {
 };
 
 export const createErrorResponse = (error: AppError | Error) => {
-  const statusCode = error instanceof AppError ? error.statusCode : STATUS.SERVER_ERROR;
+  const statusCode =
+    error instanceof AppError ? error.statusCode : STATUS.SERVER_ERROR;
   const message = error.message || STATUS_ERROR_MESSAGE.INTERNAL_SERVER;
 
   return {
     success: false,
     error: {
       status: statusCode,
-      message: message
-    }
+      message: message,
+    },
   };
 };

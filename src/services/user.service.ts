@@ -1,7 +1,7 @@
-import { UserDAO } from '../dao';
-import { User } from '../interfaces';
-import { UserDocument } from '../models';
-import logger from '../utils/logger';
+import { UserDAO } from "../dao";
+import { User } from "../interfaces";
+import { UserDocument } from "../models";
+import logger from "../utils/logger";
 
 // Helper function to convert UserDocument to User
 const convertToUser = (doc: UserDocument): User => ({
@@ -10,19 +10,21 @@ const convertToUser = (doc: UserDocument): User => ({
   email: doc.email,
   role: doc.role,
   created_at: doc.created_at,
-  updated_at: doc.updated_at
+  updated_at: doc.updated_at,
 });
 
 export class UserService {
   /**
    * Create a new user
    */
-  static async createUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> {
+  static async createUser(
+    userData: Omit<User, "id" | "created_at" | "updated_at">,
+  ): Promise<User> {
     try {
       // Check if user already exists
       const existingUser = await UserDAO.getByEmail(userData.email);
       if (existingUser) {
-        throw new Error('User with this email already exists');
+        throw new Error("User with this email already exists");
       }
 
       const user = await UserDAO.create(userData);
@@ -63,7 +65,10 @@ export class UserService {
   /**
    * Update user
    */
-  static async updateUser(id: string, updateData: Partial<User>): Promise<User | null> {
+  static async updateUser(
+    id: string,
+    updateData: Partial<User>,
+  ): Promise<User | null> {
     try {
       const user = await UserDAO.updateById(id, updateData);
       if (user) {
@@ -95,16 +100,20 @@ export class UserService {
   /**
    * Get all users with pagination
    */
-  static async getUsers(limit: number = 10, skip: number = 0, role?: "patient" | "doctor" | "admin"): Promise<{ users: User[]; total: number }> {
+  static async getUsers(
+    limit: number = 10,
+    skip: number = 0,
+    role?: "patient" | "doctor" | "admin",
+  ): Promise<{ users: User[]; total: number }> {
     try {
       const [users, total] = await Promise.all([
         UserDAO.getAll(limit, skip, role),
-        UserDAO.getCount(role)
+        UserDAO.getCount(role),
       ]);
 
       return {
-        users: users.map(user => convertToUser(user)),
-        total
+        users: users.map((user) => convertToUser(user)),
+        total,
       };
     } catch (error) {
       logger.error(`Error getting users: ${error}`);
@@ -122,7 +131,7 @@ export class UserService {
         return false;
       }
 
-      if (doctor.role !== 'doctor' && doctor.role !== 'admin') {
+      if (doctor.role !== "doctor" && doctor.role !== "admin") {
         return false;
       }
 
@@ -138,7 +147,7 @@ export class UserService {
    */
   static async getDoctors(): Promise<User[]> {
     try {
-      const doctors = await UserDAO.getAll(100, 0, 'doctor');
+      const doctors = await UserDAO.getAll(100, 0, "doctor");
       return doctors.map(convertToUser);
     } catch (error) {
       logger.error(`Error getting doctors: ${error}`);

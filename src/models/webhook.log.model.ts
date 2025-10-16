@@ -1,7 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 import { WebhookLog } from "../interfaces";
 
-export interface WebhookLogDocument extends Omit<WebhookLog, 'id'>, Document {}
+export interface WebhookLogDocument extends Omit<WebhookLog, "id">, Document {}
 
 const webhookLogSchema = new Schema<WebhookLogDocument>(
   {
@@ -45,7 +45,7 @@ const webhookLogSchema = new Schema<WebhookLogDocument>(
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
     collection: "webhook_logs",
-  }
+  },
 );
 
 // Indexes
@@ -57,5 +57,5 @@ webhookLogSchema.index({ created_at: -1 });
 
 export const WebhookLogModel = model<WebhookLogDocument>(
   "WebhookLog",
-  webhookLogSchema
+  webhookLogSchema,
 );

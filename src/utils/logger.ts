@@ -13,15 +13,13 @@ const logger = winston.createLogger({
     enumerateErrorFormat(),
     winston.format.colorize(),
     winston.format.splat(),
-    winston.format.printf(
-      (info) => `${info.level} - ${info.message}`
-    )
+    winston.format.printf((info) => `${info.level} - ${info.message}`),
   ),
   transports: [
     new winston.transports.Console({
-      stderrLevels: ["error"]
-    })
-  ]
+      stderrLevels: ["error"],
+    }),
+  ],
 });
 
 export default logger;

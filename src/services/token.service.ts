@@ -1,7 +1,7 @@
-import { TokenDAO } from '../dao';
-import { Token } from '../interfaces';
-import { TokenDocument } from '../models';
-import logger from '../utils/logger';
+import { TokenDAO } from "../dao";
+import { Token } from "../interfaces";
+import { TokenDocument } from "../models";
+import logger from "../utils/logger";
 
 // Helper function to convert TokenDocument to Token
 const convertToToken = (doc: TokenDocument): Token => ({
@@ -11,14 +11,16 @@ const convertToToken = (doc: TokenDocument): Token => ({
   refresh_token: doc.refresh_token,
   expires_at: doc.expires_at,
   created_at: doc.created_at,
-  updated_at: doc.updated_at
+  updated_at: doc.updated_at,
 });
 
 export class TokenService {
   /**
    * Create a new token
    */
-  static async createToken(tokenData: Omit<Token, 'id' | 'created_at' | 'updated_at'>): Promise<Token> {
+  static async createToken(
+    tokenData: Omit<Token, "id" | "created_at" | "updated_at">,
+  ): Promise<Token> {
     try {
       // Clean up any existing tokens for this user
       await TokenDAO.deleteByUserId(tokenData.user_id);
@@ -48,7 +50,9 @@ export class TokenService {
   /**
    * Get token by access token
    */
-  static async getTokenByAccessToken(accessToken: string): Promise<Token | null> {
+  static async getTokenByAccessToken(
+    accessToken: string,
+  ): Promise<Token | null> {
     try {
       const token = await TokenDAO.getByAccessToken(accessToken);
       if (!token) {
@@ -58,7 +62,7 @@ export class TokenService {
       // Check if token is expired
       const now = new Date();
       const expiresAt = new Date(token.expires_at);
-      
+
       if (now > expiresAt) {
         // Token is expired, clean it up
         await TokenDAO.deleteById(token.id);
@@ -75,7 +79,9 @@ export class TokenService {
   /**
    * Get token by refresh token
    */
-  static async getTokenByRefreshToken(refreshToken: string): Promise<Token | null> {
+  static async getTokenByRefreshToken(
+    refreshToken: string,
+  ): Promise<Token | null> {
     try {
       const token = await TokenDAO.getByRefreshToken(refreshToken);
       if (!token) {
@@ -85,7 +91,7 @@ export class TokenService {
       // Check if token is expired
       const now = new Date();
       const expiresAt = new Date(token.expires_at);
-      
+
       if (now > expiresAt) {
         // Token is expired, clean it up
         await TokenDAO.deleteById(token.id);
@@ -105,7 +111,7 @@ export class TokenService {
   static async getTokensByUserId(userId: string): Promise<Token[]> {
     try {
       const tokens = await TokenDAO.getByUserId(userId);
-      return tokens.map(token => convertToToken(token));
+      return tokens.map((token) => convertToToken(token));
     } catch (error) {
       logger.error(`Error getting tokens by user ID: ${error}`);
       throw error;
@@ -115,7 +121,10 @@ export class TokenService {
   /**
    * Update token
    */
-  static async updateToken(id: string, updateData: Partial<Token>): Promise<Token | null> {
+  static async updateToken(
+    id: string,
+    updateData: Partial<Token>,
+  ): Promise<Token | null> {
     try {
       const token = await TokenDAO.updateById(id, updateData);
       if (token) {
@@ -161,29 +170,35 @@ export class TokenService {
   /**
    * Refresh token
    */
-  static async refreshToken(refreshToken: string, newAccessToken: string, newExpiresAt: string): Promise<Token | null> {
+  static async refreshToken(
+    refreshToken: string,
+    newAccessToken: string,
+    newExpiresAt: string,
+  ): Promise<Token | null> {
     try {
       const existingToken = await TokenDAO.getByRefreshToken(refreshToken);
       if (!existingToken) {
-        throw new Error('Invalid refresh token');
+        throw new Error("Invalid refresh token");
       }
 
       // Check if refresh token is expired
       const now = new Date();
       const expiresAt = new Date(existingToken.expires_at);
-      
+
       if (now > expiresAt) {
         await TokenDAO.deleteById(existingToken.id);
-        throw new Error('Refresh token expired');
+        throw new Error("Refresh token expired");
       }
 
       // Update with new access token and expiration
       const updatedToken = await TokenDAO.updateById(existingToken.id, {
         access_token: newAccessToken,
-        expires_at: newExpiresAt
+        expires_at: newExpiresAt,
       });
 
-      logger.info(`Token refreshed successfully for user: ${existingToken.user_id}`);
+      logger.info(
+        `Token refreshed successfully for user: ${existingToken.user_id}`,
+      );
       return updatedToken ? convertToToken(updatedToken) : null;
     } catch (error) {
       logger.error(`Error refreshing token: ${error}`);
@@ -194,26 +209,28 @@ export class TokenService {
   /**
    * Validate token
    */
-  static async validateToken(accessToken: string): Promise<{ valid: boolean; userId?: string; error?: string }> {
+  static async validateToken(
+    accessToken: string,
+  ): Promise<{ valid: boolean; userId?: string; error?: string }> {
     try {
       const token = await this.getTokenByAccessToken(accessToken);
-      
+
       if (!token) {
         return {
           valid: false,
-          error: 'Token not found or expired'
+          error: "Token not found or expired",
         };
       }
 
       return {
         valid: true,
-        userId: token.user_id
+        userId: token.user_id,
       };
     } catch (error) {
       logger.error(`Error validating token: ${error}`);
       return {
         valid: false,
-        error: `Token validation failed: ${error}`
+        error: `Token validation failed: ${error}`,
       };
     }
   }

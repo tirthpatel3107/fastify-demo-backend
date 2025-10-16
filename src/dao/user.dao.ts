@@ -1,11 +1,13 @@
-import { UserModel, UserDocument } from '../models';
-import { User } from '../interfaces';
+import { UserModel, UserDocument } from "../models";
+import { User } from "../interfaces";
 
 export class UserDAO {
   /**
    * Create a new user
    */
-  static async create(userData: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<UserDocument> {
+  static async create(
+    userData: Omit<User, "id" | "created_at" | "updated_at">,
+  ): Promise<UserDocument> {
     try {
       const user = new UserModel(userData);
       return await user.save();
@@ -39,12 +41,15 @@ export class UserDAO {
   /**
    * Update user by ID
    */
-  static async updateById(id: string, updateData: Partial<User>): Promise<UserDocument | null> {
+  static async updateById(
+    id: string,
+    updateData: Partial<User>,
+  ): Promise<UserDocument | null> {
     try {
       return await UserModel.findByIdAndUpdate(
         id,
         { ...updateData, updated_at: new Date() },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
     } catch (error) {
       throw new Error(`Failed to update user: ${error}`);
@@ -66,7 +71,11 @@ export class UserDAO {
   /**
    * Get all users with pagination
    */
-  static async getAll(limit: number = 10, skip: number = 0, role?: "patient" | "doctor" | "admin"): Promise<UserDocument[]> {
+  static async getAll(
+    limit: number = 10,
+    skip: number = 0,
+    role?: "patient" | "doctor" | "admin",
+  ): Promise<UserDocument[]> {
     try {
       const filter = role ? { role } : {};
       return await UserModel.find(filter)
@@ -81,7 +90,9 @@ export class UserDAO {
   /**
    * Get users count
    */
-  static async getCount(role?: "patient" | "doctor" | "admin"): Promise<number> {
+  static async getCount(
+    role?: "patient" | "doctor" | "admin",
+  ): Promise<number> {
     try {
       const filter = role ? { role } : {};
       return await UserModel.countDocuments(filter);

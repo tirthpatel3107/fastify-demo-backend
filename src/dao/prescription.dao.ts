@@ -1,11 +1,16 @@
-import { PrescriptionModel, PrescriptionDocument } from '../models';
-import { CreatePrescriptionRequest, UpdatePrescriptionData } from '../interfaces';
+import { PrescriptionModel, PrescriptionDocument } from "../models";
+import {
+  CreatePrescriptionRequest,
+  UpdatePrescriptionData,
+} from "../interfaces";
 
 export class PrescriptionDAO {
   /**
    * Create a new prescription
    */
-  static async create(prescriptionData: CreatePrescriptionRequest): Promise<PrescriptionDocument> {
+  static async create(
+    prescriptionData: CreatePrescriptionRequest,
+  ): Promise<PrescriptionDocument> {
     try {
       const prescription = new PrescriptionModel(prescriptionData);
       return await prescription.save();
@@ -28,12 +33,15 @@ export class PrescriptionDAO {
   /**
    * Update prescription by ID
    */
-  static async updateById(id: string, updateData: UpdatePrescriptionData): Promise<PrescriptionDocument | null> {
+  static async updateById(
+    id: string,
+    updateData: UpdatePrescriptionData,
+  ): Promise<PrescriptionDocument | null> {
     try {
       return await PrescriptionModel.findByIdAndUpdate(
         id,
         { ...updateData, updated_at: new Date() },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
     } catch (error) {
       throw new Error(`Failed to update prescription: ${error}`);
@@ -55,7 +63,11 @@ export class PrescriptionDAO {
   /**
    * Get prescriptions by doctor ID
    */
-  static async getByDoctorId(doctorId: string, limit: number = 10, skip: number = 0): Promise<PrescriptionDocument[]> {
+  static async getByDoctorId(
+    doctorId: string,
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<PrescriptionDocument[]> {
     try {
       return await PrescriptionModel.find({ doctor_id: doctorId })
         .limit(limit)
@@ -69,7 +81,11 @@ export class PrescriptionDAO {
   /**
    * Get prescriptions by status
    */
-  static async getByStatus(status: "Pending" | "Sent" | "Delivered" | "Failed", limit: number = 10, skip: number = 0): Promise<PrescriptionDocument[]> {
+  static async getByStatus(
+    status: "Pending" | "Sent" | "Delivered" | "Failed",
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<PrescriptionDocument[]> {
     try {
       return await PrescriptionModel.find({ status })
         .limit(limit)
@@ -83,10 +99,14 @@ export class PrescriptionDAO {
   /**
    * Get prescriptions by patient name
    */
-  static async getByPatientName(patientName: string, limit: number = 10, skip: number = 0): Promise<PrescriptionDocument[]> {
+  static async getByPatientName(
+    patientName: string,
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<PrescriptionDocument[]> {
     try {
-      return await PrescriptionModel.find({ 
-        patient_name: { $regex: patientName, $options: 'i' } 
+      return await PrescriptionModel.find({
+        patient_name: { $regex: patientName, $options: "i" },
       })
         .limit(limit)
         .skip(skip)
@@ -99,7 +119,10 @@ export class PrescriptionDAO {
   /**
    * Get all prescriptions with pagination
    */
-  static async getAll(limit: number = 10, skip: number = 0): Promise<PrescriptionDocument[]> {
+  static async getAll(
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<PrescriptionDocument[]> {
     try {
       return await PrescriptionModel.find()
         .limit(limit)
@@ -113,7 +136,10 @@ export class PrescriptionDAO {
   /**
    * Get prescriptions count
    */
-  static async getCount(filters?: { status?: "Pending" | "Sent" | "Delivered" | "Failed"; doctor_id?: string }): Promise<number> {
+  static async getCount(filters?: {
+    status?: "Pending" | "Sent" | "Delivered" | "Failed";
+    doctor_id?: string;
+  }): Promise<number> {
     try {
       const filter = filters || {};
       return await PrescriptionModel.countDocuments(filter);
@@ -125,12 +151,15 @@ export class PrescriptionDAO {
   /**
    * Update prescription status
    */
-  static async updateStatus(id: string, status: "Pending" | "Sent" | "Delivered" | "Failed"): Promise<PrescriptionDocument | null> {
+  static async updateStatus(
+    id: string,
+    status: "Pending" | "Sent" | "Delivered" | "Failed",
+  ): Promise<PrescriptionDocument | null> {
     try {
       return await PrescriptionModel.findByIdAndUpdate(
         id,
         { status, updated_at: new Date() },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
     } catch (error) {
       throw new Error(`Failed to update prescription status: ${error}`);
