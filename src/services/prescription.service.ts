@@ -2,7 +2,6 @@ import { PrescriptionDAO } from "../dao";
 import {
   Prescription,
   CreatePrescriptionRequest,
-  UpdatePrescriptionData,
   PrescriptionResponse,
 } from "../interfaces";
 import { PrescriptionDocument } from "../models";
@@ -88,165 +87,10 @@ export class PrescriptionService {
     }
   }
 
-  /**
-   * Update prescription
-   */
-  static async updatePrescription(
-    id: string,
-    updateData: UpdatePrescriptionData,
-  ): Promise<PrescriptionResponse> {
-    try {
-      const prescription = await PrescriptionDAO.updateById(id, updateData);
-      if (!prescription) {
-        return {
-          success: false,
-          error: "Prescription not found",
-        };
-      }
 
-      logger.info(`Prescription updated successfully: ${id}`);
-      return {
-        success: true,
-        data: convertToPrescription(prescription),
-        message: "Prescription updated successfully",
-      };
-    } catch (error) {
-      logger.error(`Error updating prescription: ${error}`);
-      return {
-        success: false,
-        error: `Failed to update prescription: ${error}`,
-      };
-    }
-  }
 
-  /**
-   * Delete prescription
-   */
-  static async deletePrescription(id: string): Promise<PrescriptionResponse> {
-    try {
-      const result = await PrescriptionDAO.deleteById(id);
-      if (!result) {
-        return {
-          success: false,
-          error: "Prescription not found",
-        };
-      }
 
-      logger.info(`Prescription deleted successfully: ${id}`);
-      return {
-        success: true,
-        message: "Prescription deleted successfully",
-      };
-    } catch (error) {
-      logger.error(`Error deleting prescription: ${error}`);
-      return {
-        success: false,
-        error: `Failed to delete prescription: ${error}`,
-      };
-    }
-  }
 
-  /**
-   * Get prescriptions by doctor ID
-   */
-  static async getPrescriptionsByDoctor(
-    doctorId: string,
-    limit: number = 10,
-    skip: number = 0,
-  ): Promise<{
-    success: boolean;
-    data?: Prescription[];
-    total?: number;
-    error?: string;
-  }> {
-    try {
-      const [prescriptions, total] = await Promise.all([
-        PrescriptionDAO.getByDoctorId(doctorId, limit, skip),
-        PrescriptionDAO.getCount({ doctor_id: doctorId }),
-      ]);
-
-      return {
-        success: true,
-        data: prescriptions.map(convertToPrescription),
-        total,
-      };
-    } catch (error) {
-      logger.error(`Error getting prescriptions by doctor: ${error}`);
-      return {
-        success: false,
-        error: `Failed to get prescriptions: ${error}`,
-      };
-    }
-  }
-
-  /**
-   * Get prescriptions by status
-   */
-  static async getPrescriptionsByStatus(
-    status: "Pending" | "Sent" | "Delivered" | "Failed",
-    limit: number = 10,
-    skip: number = 0,
-  ): Promise<{
-    success: boolean;
-    data?: Prescription[];
-    total?: number;
-    error?: string;
-  }> {
-    try {
-      const [prescriptions, total] = await Promise.all([
-        PrescriptionDAO.getByStatus(status, limit, skip),
-        PrescriptionDAO.getCount({ status }),
-      ]);
-
-      return {
-        success: true,
-        data: prescriptions.map(convertToPrescription),
-        total,
-      };
-    } catch (error) {
-      logger.error(`Error getting prescriptions by status: ${error}`);
-      return {
-        success: false,
-        error: `Failed to get prescriptions: ${error}`,
-      };
-    }
-  }
-
-  /**
-   * Search prescriptions by patient name
-   */
-  static async searchPrescriptionsByPatient(
-    patientName: string,
-    limit: number = 10,
-    skip: number = 0,
-  ): Promise<{
-    success: boolean;
-    data?: Prescription[];
-    total?: number;
-    error?: string;
-  }> {
-    try {
-      const prescriptions = await PrescriptionDAO.getByPatientName(
-        patientName,
-        limit,
-        skip,
-      );
-      // Note: Mongoose doesn't support count with regex in a simple way, so we'll use the length
-      const total = prescriptions.length;
-
-      return {
-        success: true,
-        data: prescriptions.map(convertToPrescription),
-        total,
-      };
-    } catch (error) {
-      logger.error(`Error searching prescriptions by patient: ${error}`);
-      return {
-        success: false,
-        error: `Failed to search prescriptions: ${error}`,
-      };
-    }
-  }
 
   /**
    * Get all prescriptions with pagination
@@ -311,43 +155,4 @@ export class PrescriptionService {
     }
   }
 
-  /**
-   * Get prescription statistics
-   */
-  static async getPrescriptionStats(): Promise<{
-    success: boolean;
-    data?: any;
-    error?: string;
-  }> {
-    try {
-      const [total, pending, sent, delivered, failed] = await Promise.all([
-        PrescriptionDAO.getCount(),
-        PrescriptionDAO.getCount({ status: "Pending" }),
-        PrescriptionDAO.getCount({ status: "Sent" }),
-        PrescriptionDAO.getCount({ status: "Delivered" }),
-        PrescriptionDAO.getCount({ status: "Failed" }),
-      ]);
-
-      const stats = {
-        total,
-        by_status: {
-          pending,
-          sent,
-          delivered,
-          failed,
-        },
-      };
-
-      return {
-        success: true,
-        data: stats,
-      };
-    } catch (error) {
-      logger.error(`Error getting prescription stats: ${error}`);
-      return {
-        success: false,
-        error: `Failed to get prescription statistics: ${error}`,
-      };
-    }
-  }
 }

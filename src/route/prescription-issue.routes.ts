@@ -1,9 +1,12 @@
 import { FastifyInstance } from "fastify";
-import { PrescriptionIssueController } from "../controllers/prescription-issue.controller";
+import { PrescriptionIssueController } from "../controllers";
 
 export default async function prescriptionIssueRoutes(
   fastify: FastifyInstance,
 ) {
+  // Get all prescriptions
+  fastify.get("/", PrescriptionIssueController.getAllPrescriptions);
+
   // Issue prescription for delivery
   fastify.post("/issue", PrescriptionIssueController.issuePrescription);
 

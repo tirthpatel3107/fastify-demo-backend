@@ -1,10 +1,47 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { SignatureRxService } from "../services/signaturerx.service";
-import { PrescriptionService } from "../services/prescription.service";
+import { SignatureRxService, PrescriptionService } from "../services";
 import { STATUS } from "../utils/enums";
 import logger from "../utils/logger";
 
 export class PrescriptionIssueController {
+  /**
+   * Get all prescriptions with pagination
+   */
+  static async getAllPrescriptions(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ) {
+    try {
+      const { limit = 10, skip = 0 } = request.query as { limit?: number; skip?: number };
+
+      const result = await PrescriptionService.getAllPrescriptions(
+        Number(limit),
+        Number(skip),
+      );
+
+      if (!result.success) {
+        return reply.code(STATUS.SERVER_ERROR).send({
+          success: false,
+          error: result.error,
+        });
+      }
+
+      return reply.code(STATUS.SUCCESS).send({
+        success: true,
+        data: result.data,
+        total: result.total,
+        message: "Prescriptions retrieved successfully",
+      });
+    } catch (error: any) {
+      logger.error(`Error getting all prescriptions: ${error.message}`);
+      return reply.code(STATUS.SERVER_ERROR).send({
+        success: false,
+        error: "Failed to get prescriptions",
+        message: error.message,
+      });
+    }
+  }
+
   /**
    * Issue a prescription for delivery using SignatureRx API
    * Using the exact payload format from Blinx Healthcare assessment

@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { OAuth2Controller } from "../controllers/oauth2.controller";
+import { OAuth2Controller } from "../controllers";
 
 export default async function oauth2Routes(fastify: FastifyInstance) {
   // Get OAuth2 token

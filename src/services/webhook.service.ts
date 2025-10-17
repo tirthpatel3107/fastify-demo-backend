@@ -427,7 +427,9 @@ export class WebhookService {
         lastWebhookUpdate: new Date().toISOString(),
       };
 
-      await PrescriptionService.updatePrescription(prescriptionId, {
+      // Update prescription payload with webhook data using DAO directly
+      const { PrescriptionDAO } = await import("../dao");
+      await PrescriptionDAO.updateById(prescriptionId, {
         payload: payloadUpdate,
       });
 

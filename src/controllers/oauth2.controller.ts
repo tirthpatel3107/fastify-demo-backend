@@ -1,6 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { OAuth2Service } from "../services/oauth2.service";
-import { SignatureRxService } from "../services/signaturerx.service";
+import { OAuth2Service, SignatureRxService } from "../services";
 import { OAuth2TokenRequestSchema } from "../utils/schemas";
 import { STATUS } from "../utils/enums";
 import logger from "../utils/logger";

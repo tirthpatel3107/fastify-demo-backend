@@ -1,7 +1,5 @@
 import axios, { AxiosResponse } from "axios";
 import logger from "../utils/logger";
-import { TokenStore } from "../interfaces";
-import { TokenDAO } from "../dao";
 
 export interface OAuth2TokenResponse {
   access_token: string;
@@ -154,62 +152,5 @@ export class OAuth2Service {
       expires_at: this.cachedToken.expires_at,
       valid: this.isTokenValid(this.cachedToken),
     };
-  }
-
-  /**
-   * Store token in database using TokenStore interface
-   */
-  static async storeTokenInDatabase(
-    tokenData: OAuth2TokenResponse,
-  ): Promise<TokenStore> {
-    try {
-      const tokenStore: TokenStore = {
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.access_token, // Using access_token as refresh_token for client_credentials
-        expires_at: new Date(
-          Date.now() + tokenData.expires_in * 1000,
-        ).toISOString(),
-      };
-
-      // Store in database
-      await TokenDAO.create(tokenStore);
-      logger.info("Token stored in database successfully");
-
-      return tokenStore;
-    } catch (error) {
-      logger.error(`Error storing token in database: ${error}`);
-      throw error;
-    }
-  }
-
-  /**
-   * Get valid token from database
-   */
-  static async getValidTokenFromDatabase(): Promise<string | null> {
-    try {
-      const token = await TokenDAO.getValidToken();
-      if (token) {
-        logger.info("Valid token found in database");
-        return token.access_token;
-      }
-      return null;
-    } catch (error) {
-      logger.error(`Error getting valid token from database: ${error}`);
-      return null;
-    }
-  }
-
-  /**
-   * Clear expired tokens from database
-   */
-  static async clearExpiredTokensFromDatabase(): Promise<number> {
-    try {
-      const deletedCount = await TokenDAO.deleteExpiredTokens();
-      logger.info(`Cleared ${deletedCount} expired tokens from database`);
-      return deletedCount;
-    } catch (error) {
-      logger.error(`Error clearing expired tokens from database: ${error}`);
-      return 0;
-    }
   }
 }
