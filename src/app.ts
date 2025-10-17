@@ -25,8 +25,10 @@ app.register(fastifyCors, {
   origin: true,
 });
 
-// Database connection
-app.register(connectToMongoDB);
+// Database connection with timeout configuration
+app.register(connectToMongoDB, {
+  timeout: 15000 // 15 seconds timeout for database connection
+});
 
 // Importing Routes
 routeManager(app);
