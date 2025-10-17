@@ -5,7 +5,7 @@ const start = async () => {
   try {
     // Wait for the app to be ready so that plugins are registered
     await app.ready();
-    
+
     const PORT = app.config.PORT || 3000;
 
     await app.listen({ port: Number(PORT) });

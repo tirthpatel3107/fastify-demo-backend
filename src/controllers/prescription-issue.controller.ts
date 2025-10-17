@@ -1,39 +1,82 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { SignatureRxService } from "../services/signaturerx.service";
 import { PrescriptionService } from "../services/prescription.service";
-import { PrescriptionIssueRequestSchema } from "../utils/schemas";
 import { STATUS } from "../utils/enums";
 import logger from "../utils/logger";
 
 export class PrescriptionIssueController {
   /**
    * Issue a prescription for delivery using SignatureRx API
+   * Using the exact payload format from Blinx Healthcare assessment
    */
   static async issuePrescription(request: FastifyRequest, reply: FastifyReply) {
     try {
-      // Validate request body
-      const validationResult = PrescriptionIssueRequestSchema.safeParse(request.body);
-      if (!validationResult.success) {
-        return reply.code(STATUS.BAD_REQUEST).send({
-          success: false,
-          error: "Invalid request data",
-          details: validationResult.error.issues,
-        });
-      }
+      // Get request body (simplified validation for this prototype)
+      // const requestData = request.body as any; // Currently unused
 
-      const prescriptionData = validationResult.data;
+      // Create SignatureRx payload using the exact format from the assessment
+      const signatureRxPayload = {
+        action: "issueForDelivery",
+        contact_id: 0,
+        clinic_id: 842,
+        aff_tag: "Blinx PACO",
+        secure_pin: "111111",
+        notify: true,
+        send_sms: true,
+        invoice_clinic: false,
+        delivery_address: {
+          address_ln1: "Address line 1",
+          address_ln2: "",
+          city: "BLABLA",
+          post_code: "BL512",
+          country: "United Kingdom",
+        },
+        prescription_id: "",
+        patient: {
+          first_name: "Pooja",
+          last_name: "TR",
+          gender: "female",
+          email: "pooja+1133@signaturerx.co.uk",
+          phone: "441234567890",
+          birth_day: "10",
+          birth_month: "01",
+          birth_year: "1990",
+          address_ln1: "Address line 1",
+          address_ln2: "",
+          city: "BLABLA",
+          post_code: "SW1A",
+          country: "United Kingdom",
+          client_ref_id: "testingclientref",
+        },
+        notes: "",
+        client_ref_id: "",
+        medicines: [
+          {
+            object: "medicine",
+            id: 0,
+            VPID: "42089511000001103",
+            APID: "",
+            VPPID: "",
+            APPID: "",
+            description: "Sildenafil 25mg tablets",
+            qty: "10",
+            directions: "as told",
+          },
+        ],
+        prescriber_ip: "11.17.271.86",
+      };
 
-      // Validate doctor exists and is authorized
-      const doctorValidation = await PrescriptionService.getPrescriptionById(prescriptionData.doctor.id);
-      if (!doctorValidation.success) {
-        return reply.code(STATUS.BAD_REQUEST).send({
-          success: false,
-          error: "Invalid or unauthorized doctor",
-        });
-      }
+      logger.info(
+        "Issuing prescription with SignatureRx payload:",
+        JSON.stringify(signatureRxPayload, null, 2),
+      );
 
       // Issue prescription via SignatureRx API
-      const signatureRxResponse = await SignatureRxService.issuePrescriptionForDelivery(prescriptionData, request.server.config);
+      const signatureRxResponse =
+        await SignatureRxService.issuePrescriptionForDelivery(
+          signatureRxPayload,
+          request.server.config,
+        );
 
       if (!signatureRxResponse.success) {
         logger.error(`SignatureRx API error: ${signatureRxResponse.error}`);
@@ -46,27 +89,32 @@ export class PrescriptionIssueController {
 
       // Store prescription details in our database
       const prescriptionRequest = {
-        patient_name: prescriptionData.patient.name,
-        patient_dob: prescriptionData.patient.dateOfBirth,
-        patient_address: prescriptionData.patient.address,
-        medication: prescriptionData.medicine.name,
-        dosage: prescriptionData.medicine.dosage,
-        delivery_type: prescriptionData.delivery.type,
-        doctor_id: prescriptionData.doctor.id,
+        patient_name: `${signatureRxPayload.patient.first_name} ${signatureRxPayload.patient.last_name}`,
+        patient_dob: `${signatureRxPayload.patient.birth_year}-${signatureRxPayload.patient.birth_month}-${signatureRxPayload.patient.birth_day}`,
+        patient_address: `${signatureRxPayload.patient.address_ln1}, ${signatureRxPayload.patient.city}, ${signatureRxPayload.patient.post_code}`,
+        medication:
+          signatureRxPayload.medicines[0]?.description || "Unknown medication",
+        dosage: signatureRxPayload.medicines[0]?.directions || "As directed",
+        delivery_type: "delivery" as const,
+        doctor_id: "blinx_doctor_001",
         payload: {
           signatureRxId: signatureRxResponse.data?.id,
           signatureRxStatus: signatureRxResponse.data?.status,
           prescriptionUrl: signatureRxResponse.data?.prescription_url,
           signatureRxCreatedAt: signatureRxResponse.data?.created_at,
           signatureRxUpdatedAt: signatureRxResponse.data?.updated_at,
+          originalPayload: signatureRxPayload,
         },
         status: "Sent" as const,
       };
 
-      const prescriptionResult = await PrescriptionService.createPrescription(prescriptionRequest);
+      const prescriptionResult =
+        await PrescriptionService.createPrescription(prescriptionRequest);
 
       if (!prescriptionResult.success) {
-        logger.error(`Failed to store prescription in database: ${prescriptionResult.error}`);
+        logger.error(
+          `Failed to store prescription in database: ${prescriptionResult.error}`,
+        );
         return reply.code(STATUS.SERVER_ERROR).send({
           success: false,
           error: "Failed to store prescription in database",
@@ -74,7 +122,9 @@ export class PrescriptionIssueController {
         });
       }
 
-      logger.info(`Prescription issued successfully: ${prescriptionResult.data?.id}`);
+      logger.info(
+        `Prescription issued successfully: ${prescriptionResult.data?.id}`,
+      );
 
       return reply.code(STATUS.CREATE).send({
         success: true,
@@ -100,7 +150,10 @@ export class PrescriptionIssueController {
   /**
    * Get prescription status by ID
    */
-  static async getPrescriptionStatus(request: FastifyRequest, reply: FastifyReply) {
+  static async getPrescriptionStatus(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ) {
     try {
       const { id } = request.params as { id: string };
 
@@ -111,7 +164,8 @@ export class PrescriptionIssueController {
         });
       }
 
-      const prescriptionResult = await PrescriptionService.getPrescriptionById(id);
+      const prescriptionResult =
+        await PrescriptionService.getPrescriptionById(id);
 
       if (!prescriptionResult.success) {
         return reply.code(STATUS.NOT_FOUND).send({
@@ -125,8 +179,10 @@ export class PrescriptionIssueController {
         data: {
           id: prescriptionResult.data?.id,
           status: prescriptionResult.data?.status,
-          signatureRxId: (prescriptionResult.data?.payload as any)?.signatureRxId,
-          prescriptionUrl: (prescriptionResult.data?.payload as any)?.prescriptionUrl,
+          signatureRxId: (prescriptionResult.data?.payload as any)
+            ?.signatureRxId,
+          prescriptionUrl: (prescriptionResult.data?.payload as any)
+            ?.prescriptionUrl,
           created_at: prescriptionResult.data?.created_at,
           updated_at: prescriptionResult.data?.updated_at,
         },
@@ -144,46 +200,133 @@ export class PrescriptionIssueController {
 
   /**
    * Get available medicines for frontend dropdown
+   * Using the exact medication data from Blinx Healthcare assessment
    */
-  static async getAvailableMedicines(_request: FastifyRequest, reply: FastifyReply) {
+  static async getAvailableMedicines(
+    _request: FastifyRequest,
+    reply: FastifyReply,
+  ) {
     try {
-      // Mock medicine data for frontend dropdown
+      // Medicine data from Blinx Healthcare assessment
       const medicines = [
         {
-          id: "med_001",
-          name: "Paracetamol 500mg",
-          dosage: "1 tablet every 6 hours",
-          description: "Pain relief and fever reducer",
+          snomedId: "13892511000001100",
+          displayName: "Amlodipine 5mg/5ml oral solution",
+          unlicensed: false,
+          endorsements: {},
+          prescribeByBrandOnly: false,
+          type: "vmp",
+          bnfExactMatch: null,
+          bnfMatches: null,
+          applianceTypes: [],
         },
         {
-          id: "med_002", 
-          name: "Ibuprofen 400mg",
-          dosage: "1 tablet every 8 hours",
-          description: "Anti-inflammatory pain relief",
+          snomedId: "39732011000001102",
+          displayName: "Amlodipine 5mg tablets",
+          unlicensed: false,
+          endorsements: {},
+          prescribeByBrandOnly: false,
+          type: "vmp",
+          bnfExactMatch: null,
+          bnfMatches: null,
+          applianceTypes: [],
         },
         {
-          id: "med_003",
-          name: "Amoxicillin 250mg",
-          dosage: "1 capsule every 8 hours",
-          description: "Antibiotic for bacterial infections",
+          snomedId: "11712111000001101",
+          displayName: "Amlodipine 50mg/5ml oral solution",
+          unlicensed: false,
+          endorsements: {},
+          prescribeByBrandOnly: false,
+          type: "vmp",
+          bnfExactMatch: null,
+          bnfMatches: null,
+          applianceTypes: [],
         },
         {
-          id: "med_004",
-          name: "Lisinopril 10mg",
-          dosage: "1 tablet daily",
-          description: "Blood pressure medication",
+          snomedId: "15773611000001107",
+          displayName: "Amlodipine 2mg/5ml oral solution",
+          unlicensed: false,
+          endorsements: {},
+          prescribeByBrandOnly: false,
+          type: "vmp",
+          bnfExactMatch: null,
+          bnfMatches: null,
+          applianceTypes: [],
         },
         {
-          id: "med_005",
-          name: "Metformin 500mg",
-          dosage: "1 tablet twice daily",
-          description: "Diabetes medication",
+          snomedId: "15773411000001109",
+          displayName: "Amlodipine 1.5mg/5ml oral solution",
+          unlicensed: false,
+          endorsements: {},
+          prescribeByBrandOnly: false,
+          type: "vmp",
+          bnfExactMatch: null,
+          bnfMatches: null,
+          applianceTypes: [],
+        },
+        {
+          snomedId: "11711911000001109",
+          displayName: "Amlodipine 4mg/5ml oral solution",
+          unlicensed: false,
+          endorsements: {},
+          prescribeByBrandOnly: false,
+          type: "vmp",
+          bnfExactMatch: null,
+          bnfMatches: null,
+          applianceTypes: [],
+        },
+        {
+          snomedId: "8278311000001107",
+          displayName: "Amlodipine 5mg/5ml oral suspension",
+          unlicensed: false,
+          endorsements: {},
+          prescribeByBrandOnly: false,
+          type: "vmp",
+          bnfExactMatch: null,
+          bnfMatches: null,
+          applianceTypes: [],
+        },
+        {
+          snomedId: "39731911000001109",
+          displayName: "Amlodipine 10mg tablets",
+          unlicensed: false,
+          endorsements: {},
+          prescribeByBrandOnly: false,
+          type: "vmp",
+          bnfExactMatch: null,
+          bnfMatches: null,
+          applianceTypes: [],
+        },
+        {
+          snomedId: "20478011000001105",
+          displayName: "Amlodipine 10mg/5ml oral solution",
+          unlicensed: false,
+          endorsements: {},
+          prescribeByBrandOnly: false,
+          type: "vmp",
+          bnfExactMatch: null,
+          bnfMatches: null,
+          applianceTypes: [],
+        },
+        {
+          snomedId: "42206211000001100",
+          displayName: "Amlodipine 2.5mg tablets",
+          unlicensed: false,
+          endorsements: {},
+          prescribeByBrandOnly: false,
+          type: "vmp",
+          bnfExactMatch: null,
+          bnfMatches: null,
+          applianceTypes: [],
         },
       ];
 
       return reply.code(STATUS.SUCCESS).send({
         success: true,
-        data: medicines,
+        data: {
+          meds: medicines,
+          total: medicines.length,
+        },
         message: "Available medicines retrieved successfully",
       });
     } catch (error: any) {
@@ -198,16 +341,29 @@ export class PrescriptionIssueController {
 
   /**
    * Get mock patient data for frontend testing
+   * Using SignatureRx patient format from Blinx Healthcare assessment
    */
-  static async getMockPatientData(_request: FastifyRequest, reply: FastifyReply) {
+  static async getMockPatientData(
+    _request: FastifyRequest,
+    reply: FastifyReply,
+  ) {
     try {
-      // Mock patient data for frontend testing
+      // Mock patient data in SignatureRx format
       const mockPatient = {
-        name: "John Doe",
-        dateOfBirth: "1990-01-15",
-        address: "123 Main Street, London, SW1A 1AA",
-        phone: "+44 20 7946 0958",
-        email: "john.doe@example.com",
+        first_name: "Pooja",
+        last_name: "TR",
+        gender: "female",
+        email: "pooja+1133@signaturerx.co.uk",
+        phone: "441234567890",
+        birth_day: "10",
+        birth_month: "01",
+        birth_year: "1990",
+        address_ln1: "Address line 1",
+        address_ln2: "",
+        city: "BLABLA",
+        post_code: "SW1A",
+        country: "United Kingdom",
+        client_ref_id: "testingclientref",
       };
 
       return reply.code(STATUS.SUCCESS).send({

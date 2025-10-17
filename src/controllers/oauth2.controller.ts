@@ -24,7 +24,9 @@ export class OAuth2Controller {
       const tokenData = validationResult.data;
 
       // Get valid token
-      const accessToken = await OAuth2Service.getValidToken(request.server.config);
+      const accessToken = await OAuth2Service.getValidToken(
+        request.server.config,
+      );
 
       // Get token info for response
       const tokenInfo = OAuth2Service.getTokenInfo();
@@ -36,7 +38,9 @@ export class OAuth2Controller {
         data: {
           access_token: accessToken,
           token_type: "Bearer",
-          expires_in: tokenInfo.expires_at ? Math.floor((tokenInfo.expires_at - Date.now()) / 1000) : 3600,
+          expires_in: tokenInfo.expires_at
+            ? Math.floor((tokenInfo.expires_at - Date.now()) / 1000)
+            : 3600,
           scope: tokenData.scope,
         },
         message: "Token retrieved successfully",
@@ -56,8 +60,10 @@ export class OAuth2Controller {
    */
   static async testConnection(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const result = await SignatureRxService.testConnection(request.server.config);
-      
+      const result = await SignatureRxService.testConnection(
+        request.server.config,
+      );
+
       if (result.success) {
         return reply.code(STATUS.SUCCESS).send({
           success: true,
@@ -85,7 +91,7 @@ export class OAuth2Controller {
   static async getTokenStatus(_request: FastifyRequest, reply: FastifyReply) {
     try {
       const tokenInfo = OAuth2Service.getTokenInfo();
-      
+
       return reply.code(STATUS.SUCCESS).send({
         success: true,
         data: tokenInfo,
@@ -107,9 +113,9 @@ export class OAuth2Controller {
   static async clearTokenCache(_request: FastifyRequest, reply: FastifyReply) {
     try {
       OAuth2Service.clearCachedToken();
-      
+
       logger.info("OAuth2 token cache cleared manually");
-      
+
       return reply.code(STATUS.SUCCESS).send({
         success: true,
         message: "Token cache cleared successfully",

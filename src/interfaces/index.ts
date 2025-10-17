@@ -1,4 +1,4 @@
-// Core interfaces for the prescription system
+// Core interfaces for the SignatureRx prescription system
 
 export interface TokenStore {
   access_token: string;
@@ -18,23 +18,7 @@ export interface WebhookEvent {
   received_at: string;
 }
 
-// Extended interfaces for database operations
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "patient" | "doctor" | "admin";
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface Token extends TokenStore {
-  id: string;
-  user_id: string;
-  created_at: Date;
-  updated_at: Date;
-}
-
+// Database interfaces
 export interface Prescription extends PrescriptionRequest {
   patient_name: string;
   patient_dob: string;

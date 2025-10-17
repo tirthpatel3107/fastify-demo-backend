@@ -396,21 +396,23 @@ export class WebhookService {
    */
   static async updatePrescriptionStatus(
     prescriptionId: string,
-    newStatus: string,
-    webhookPayload: any
+    newStatus: "Pending" | "Sent" | "Delivered" | "Failed",
+    webhookPayload: any,
   ): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
       // Import PrescriptionService here to avoid circular dependency
-      const { PrescriptionService } = await import('./prescription.service');
-      
+      const { PrescriptionService } = await import("./prescription.service");
+
       // Update prescription status
       const updateResult = await PrescriptionService.updatePrescriptionStatus(
         prescriptionId,
-        newStatus
+        newStatus,
       );
 
       if (!updateResult.success) {
-        logger.error(`Failed to update prescription status: ${updateResult.error}`);
+        logger.error(
+          `Failed to update prescription status: ${updateResult.error}`,
+        );
         return {
           success: false,
           error: `Failed to update prescription status: ${updateResult.error}`,
@@ -429,8 +431,10 @@ export class WebhookService {
         payload: payloadUpdate,
       });
 
-      logger.info(`Prescription status updated successfully: ${prescriptionId} -> ${newStatus}`);
-      
+      logger.info(
+        `Prescription status updated successfully: ${prescriptionId} -> ${newStatus}`,
+      );
+
       return {
         success: true,
         data: updateResult.data,

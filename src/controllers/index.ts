@@ -1,5 +1,2 @@
-// Export all controller classes
-export { UserController } from "./user.controller";
-export { TokenController } from "./token.controller";
-export { PrescriptionController } from "./prescription.controller";
+// Export only the essential controller classes for SignatureRx integration
 export { WebhookController } from "./webhook.controller";

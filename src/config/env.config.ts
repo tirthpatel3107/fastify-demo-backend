@@ -1,23 +1,10 @@
 import fastifyEnv from "@fastify/env";
-import type { FastifyInstance, FastifyPluginCallback } from "fastify";
+import type { FastifyInstance } from "fastify";
 import fastifyPlugin from "fastify-plugin";
 import { Static, Type } from "@sinclair/typebox";
 
-enum NodeEnv {
-  development = "development",
-  test = "test",
-  production = "production",
-}
-
 const ConfigSchema = Type.Strict(
   Type.Object({
-    NODE_ENV: Type.Enum(NodeEnv),
-    LOG_LEVEL: Type.String(),
-    HTTP_PORT: Type.String(),
-    HTTP_HOST: Type.String(),
-    MONGO_URL: Type.String(),
-    MONGO_DB_NAME: Type.String(),
-    MONGO_COLLECTION_NAME: Type.String(),
     MONGODB_URI: Type.String(),
     SIGNATURERX_CLIENT_ID: Type.String(),
     SIGNATURERX_CLIENT_SECRET: Type.String(),
@@ -26,7 +13,7 @@ const ConfigSchema = Type.Strict(
     SIGNATURERX_BASE_URL: Type.String(),
     SIGNATURERX_PRESCRIPTIONS_URL: Type.String(),
     PORT: Type.Optional(Type.String()),
-  }),
+  })
 );
 
 type Config = Static<typeof ConfigSchema>;
@@ -37,19 +24,14 @@ declare module "fastify" {
   }
 }
 
-const buildFastifyEnv: FastifyPluginCallback = async (
+const buildFastifyEnv = async (
   server: FastifyInstance,
-  _options: Record<string, any>,
-  done: (err?: Error | undefined) => void,
+  _options: Record<string, any>
 ) => {
   const schema = {
     type: "object",
     required: [
-      "HTTP_PORT",
-      "HTTP_HOST",
-      "MONGO_URL",
-      "MONGO_DB_NAME",
-      "MONGO_COLLECTION_NAME",
+      "PORT",
       "MONGODB_URI",
       "SIGNATURERX_CLIENT_ID",
       "SIGNATURERX_CLIENT_SECRET",
@@ -59,21 +41,6 @@ const buildFastifyEnv: FastifyPluginCallback = async (
       "SIGNATURERX_PRESCRIPTIONS_URL",
     ],
     properties: {
-      HTTP_PORT: {
-        type: "number",
-        default: 3200,
-      },
-      HTTP_HOST: {
-        type: "string",
-        default: "0.0.0.0",
-      },
-      MONGO_URL: {
-        type: "string",
-      },
-      MONGO_DB_NAME: {
-        type: "string",
-      },
-      MONGO_COLLECTION_NAME: { type: "string" },
       MONGODB_URI: {
         type: "string",
       },
@@ -110,7 +77,7 @@ const buildFastifyEnv: FastifyPluginCallback = async (
     removeAdditional: true,
   };
 
-  return fastifyEnv(server, configOptions, done);
+  await server.register(fastifyEnv, configOptions);
 };
 
 export const buildFastifyEnvPlugin = fastifyPlugin(buildFastifyEnv);

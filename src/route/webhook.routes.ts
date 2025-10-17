@@ -55,5 +55,8 @@ export default async function webhookRoutes(fastify: FastifyInstance) {
   fastify.get("/stats/overview", catchAsync(WebhookController.getWebhookStats));
 
   // SignatureRx webhook endpoint
-  fastify.post("/signaturerx", catchAsync(WebhookController.handleSignatureRxWebhook));
+  fastify.post(
+    "/signaturerx",
+    catchAsync(WebhookController.handleSignatureRxWebhook),
+  );
 }

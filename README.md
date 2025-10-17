@@ -67,7 +67,6 @@ SIGNATURERX_PRESCRIPTIONS_URL=/prescriptions/issueForDelivery
 MONGODB_URI=mongodb://localhost:27017/fastify-demo-backend
 
 # Server Configuration
-NODE_ENV=development
 PORT=3000
 ```
 

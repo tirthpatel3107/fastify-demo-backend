@@ -1,29 +1,21 @@
 import { TokenModel, TokenDocument } from "../models";
-import { Token } from "../interfaces";
+import { TokenStore } from "../interfaces";
+import logger from "../utils/logger";
 
 export class TokenDAO {
   /**
    * Create a new token
    */
-  static async create(
-    tokenData: Omit<Token, "id" | "created_at" | "updated_at">,
-  ): Promise<TokenDocument> {
+  static async create(tokenData: TokenStore): Promise<TokenDocument> {
     try {
-      const token = new TokenModel(tokenData);
+      const token = new TokenModel({
+        ...tokenData,
+        expires_at: new Date(tokenData.expires_at), // Convert string to Date
+      });
       return await token.save();
     } catch (error) {
-      throw new Error(`Failed to create token: ${error}`);
-    }
-  }
-
-  /**
-   * Get token by ID
-   */
-  static async getById(id: string): Promise<TokenDocument | null> {
-    try {
-      return await TokenModel.findById(id);
-    } catch (error) {
-      throw new Error(`Failed to get token by ID: ${error}`);
+      logger.error(`Error creating token: ${error}`);
+      throw error;
     }
   }
 
@@ -36,88 +28,106 @@ export class TokenDAO {
     try {
       return await TokenModel.findOne({ access_token: accessToken });
     } catch (error) {
-      throw new Error(`Failed to get token by access token: ${error}`);
+      logger.error(`Error getting token by access token: ${error}`);
+      throw error;
     }
   }
 
   /**
-   * Get token by refresh token
+   * Get valid token (not expired)
    */
-  static async getByRefreshToken(
-    refreshToken: string,
+  static async getValidToken(): Promise<TokenDocument | null> {
+    try {
+      const now = new Date();
+      return await TokenModel.findOne({
+        expires_at: { $gt: now },
+      }).sort({ created_at: -1 });
+    } catch (error) {
+      logger.error(`Error getting valid token: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Update token
+   */
+  static async updateByAccessToken(
+    accessToken: string,
+    updateData: Partial<TokenStore>,
   ): Promise<TokenDocument | null> {
     try {
-      return await TokenModel.findOne({ refresh_token: refreshToken });
-    } catch (error) {
-      throw new Error(`Failed to get token by refresh token: ${error}`);
-    }
-  }
+      const updateObj: any = { ...updateData };
+      if (updateData.expires_at) {
+        updateObj.expires_at = new Date(updateData.expires_at);
+      }
 
-  /**
-   * Get tokens by user ID
-   */
-  static async getByUserId(userId: string): Promise<TokenDocument[]> {
-    try {
-      return await TokenModel.find({ user_id: userId }).sort({
-        created_at: -1,
-      });
-    } catch (error) {
-      throw new Error(`Failed to get tokens by user ID: ${error}`);
-    }
-  }
-
-  /**
-   * Update token by ID
-   */
-  static async updateById(
-    id: string,
-    updateData: Partial<Token>,
-  ): Promise<TokenDocument | null> {
-    try {
-      return await TokenModel.findByIdAndUpdate(
-        id,
-        { ...updateData, updated_at: new Date() },
-        { new: true, runValidators: true },
+      return await TokenModel.findOneAndUpdate(
+        { access_token: accessToken },
+        updateObj,
+        { new: true },
       );
     } catch (error) {
-      throw new Error(`Failed to update token: ${error}`);
+      logger.error(`Error updating token: ${error}`);
+      throw error;
     }
   }
 
   /**
-   * Delete token by ID
+   * Delete token by access token
    */
-  static async deleteById(id: string): Promise<boolean> {
+  static async deleteByAccessToken(accessToken: string): Promise<boolean> {
     try {
-      const result = await TokenModel.findByIdAndDelete(id);
-      return result !== null;
+      const result = await TokenModel.deleteOne({ access_token: accessToken });
+      return result.deletedCount > 0;
     } catch (error) {
-      throw new Error(`Failed to delete token: ${error}`);
+      logger.error(`Error deleting token: ${error}`);
+      throw error;
     }
   }
 
   /**
-   * Delete tokens by user ID
+   * Delete expired tokens
    */
-  static async deleteByUserId(userId: string): Promise<number> {
+  static async deleteExpiredTokens(): Promise<number> {
     try {
-      const result = await TokenModel.deleteMany({ user_id: userId });
-      return result.deletedCount || 0;
+      const now = new Date();
+      const result = await TokenModel.deleteMany({
+        expires_at: { $lt: now },
+      });
+      return result.deletedCount;
     } catch (error) {
-      throw new Error(`Failed to delete tokens by user ID: ${error}`);
+      logger.error(`Error deleting expired tokens: ${error}`);
+      throw error;
     }
   }
 
   /**
-   * Clean up expired tokens
+   * Get all tokens
    */
-  static async cleanupExpiredTokens(): Promise<number> {
+  static async getAll(
+    limit: number = 10,
+    skip: number = 0,
+  ): Promise<TokenDocument[]> {
     try {
-      const now = new Date().toISOString();
-      const result = await TokenModel.deleteMany({ expires_at: { $lt: now } });
-      return result.deletedCount || 0;
+      return await TokenModel.find()
+        .sort({ created_at: -1 })
+        .limit(limit)
+        .skip(skip);
     } catch (error) {
-      throw new Error(`Failed to cleanup expired tokens: ${error}`);
+      logger.error(`Error getting all tokens: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get token count
+   */
+  static async getCount(): Promise<number> {
+    try {
+      return await TokenModel.countDocuments();
+    } catch (error) {
+      logger.error(`Error getting token count: ${error}`);
+      throw error;
     }
   }
 }

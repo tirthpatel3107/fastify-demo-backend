@@ -3,23 +3,52 @@ import { OAuth2Service } from "./oauth2.service";
 import logger from "../utils/logger";
 
 export interface SignatureRxPrescriptionRequest {
+  action: string;
+  contact_id: number;
+  clinic_id: number;
+  aff_tag: string;
+  secure_pin: string;
+  notify: boolean;
+  send_sms: boolean;
+  invoice_clinic: boolean;
+  delivery_address: {
+    address_ln1: string;
+    address_ln2: string;
+    city: string;
+    post_code: string;
+    country: string;
+  };
+  prescription_id: string;
   patient: {
-    name: string;
-    dateOfBirth: string;
-    address: string;
+    first_name: string;
+    last_name: string;
+    gender: string;
+    email: string;
+    phone: string;
+    birth_day: string;
+    birth_month: string;
+    birth_year: string;
+    address_ln1: string;
+    address_ln2: string;
+    city: string;
+    post_code: string;
+    country: string;
+    client_ref_id: string;
   };
-  medicine: {
-    name: string;
-    dosage: string;
-  };
-  delivery: {
-    type: "pickup" | "delivery";
-    address?: string | undefined;
-  };
-  doctor: {
-    id: string;
-    name: string;
-  };
+  notes: string;
+  client_ref_id: string;
+  medicines: Array<{
+    object: string;
+    id: number;
+    VPID: string;
+    APID: string;
+    VPPID: string;
+    APPID: string;
+    description: string;
+    qty: string;
+    directions: string;
+  }>;
+  prescriber_ip: string;
 }
 
 export interface SignatureRxPrescriptionResponse {
@@ -50,20 +79,25 @@ export class SignatureRxService {
    */
   static async issuePrescriptionForDelivery(
     prescriptionData: SignatureRxPrescriptionRequest,
-    config?: any
+    config?: any,
   ): Promise<SignatureRxPrescriptionResponse> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       try {
-        logger.info(`Attempting to issue prescription (attempt ${attempt}/${this.MAX_RETRIES})`);
+        logger.info(
+          `Attempting to issue prescription (attempt ${attempt}/${this.MAX_RETRIES})`,
+        );
 
         // Get valid OAuth2 token
         const accessToken = await OAuth2Service.getValidToken(config);
 
         // Prepare the request
-        const baseUrl = config?.SIGNATURERX_BASE_URL || process.env["SIGNATURERX_BASE_URL"];
-        const prescriptionsUrl = config?.SIGNATURERX_PRESCRIPTIONS_URL || process.env["SIGNATURERX_PRESCRIPTIONS_URL"];
+        const baseUrl =
+          config?.SIGNATURERX_BASE_URL || process.env["SIGNATURERX_BASE_URL"];
+        const prescriptionsUrl =
+          config?.SIGNATURERX_PRESCRIPTIONS_URL ||
+          process.env["SIGNATURERX_PRESCRIPTIONS_URL"];
 
         if (!baseUrl || !prescriptionsUrl) {
           throw new Error("Missing SignatureRx API configuration");
@@ -72,34 +106,35 @@ export class SignatureRxService {
         const apiUrl = `${baseUrl}${prescriptionsUrl}`;
 
         // Make the API call
-        const response: AxiosResponse<SignatureRxPrescriptionResponse> = await axios.post(
-          apiUrl,
-          prescriptionData,
-          {
+        const response: AxiosResponse<SignatureRxPrescriptionResponse> =
+          await axios.post(apiUrl, prescriptionData, {
             headers: {
-              "Authorization": `Bearer ${accessToken}`,
+              Authorization: `Bearer ${accessToken}`,
               "Content-Type": "application/json",
-              "Accept": "application/json",
+              Accept: "application/json",
             },
             timeout: 30000, // 30 seconds timeout
-          }
-        );
+          });
 
         if (response.status === 200 || response.status === 201) {
-          logger.info(`Prescription issued successfully: ${response.data.data?.id}`);
+          logger.info(
+            `Prescription issued successfully: ${response.data.data?.id}`,
+          );
           return response.data;
         } else {
           throw new Error(`Unexpected response status: ${response.status}`);
         }
       } catch (error: any) {
         lastError = error;
-        logger.error(`Prescription issue attempt ${attempt} failed: ${error.message}`);
+        logger.error(
+          `Prescription issue attempt ${attempt} failed: ${error.message}`,
+        );
 
         // Check if this is a token-related error that we can retry
         if (this.isTokenError(error) && attempt < this.MAX_RETRIES) {
           logger.info("Token error detected, clearing cache and retrying");
           OAuth2Service.clearCachedToken();
-          
+
           // Wait before retry
           await this.delay(this.RETRY_DELAY * attempt);
           continue;
@@ -119,7 +154,9 @@ export class SignatureRxService {
     }
 
     // All retries failed
-    logger.error(`All prescription issue attempts failed. Last error: ${lastError?.message}`);
+    logger.error(
+      `All prescription issue attempts failed. Last error: ${lastError?.message}`,
+    );
     return {
       success: false,
       error: `Failed to issue prescription after ${this.MAX_RETRIES} attempts: ${lastError?.message}`,
@@ -133,21 +170,23 @@ export class SignatureRxService {
     if (error.response) {
       const status = error.response.status;
       const data = error.response.data;
-      
+
       // 401 Unauthorized or 403 Forbidden
       if (status === 401 || status === 403) {
         return true;
       }
-      
+
       // Check for token-related error messages
       if (data && typeof data === "object") {
         const errorMessage = (data.error || data.message || "").toLowerCase();
-        return errorMessage.includes("token") || 
-               errorMessage.includes("unauthorized") || 
-               errorMessage.includes("forbidden");
+        return (
+          errorMessage.includes("token") ||
+          errorMessage.includes("unauthorized") ||
+          errorMessage.includes("forbidden")
+        );
       }
     }
-    
+
     return false;
   }
 
@@ -180,13 +219,15 @@ export class SignatureRxService {
    * Delay execution for the specified milliseconds
    */
   private static delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
    * Test the connection to SignatureRx API
    */
-  static async testConnection(config?: any): Promise<{ success: boolean; message: string }> {
+  static async testConnection(
+    config?: any,
+  ): Promise<{ success: boolean; message: string }> {
     try {
       await OAuth2Service.getValidToken(config);
       logger.info("SignatureRx API connection test successful");

@@ -1,5 +1,3 @@
-// Export all service classes
-export { UserService } from "./user.service";
-export { TokenService } from "./token.service";
+// Export only the essential service classes for SignatureRx integration
 export { PrescriptionService } from "./prescription.service";
 export { WebhookService } from "./webhook.service";

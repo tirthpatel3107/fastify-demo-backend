@@ -7,12 +7,6 @@ export enum STATUS {
   SERVER_ERROR = 500,
 }
 
-export enum NODE_ENV {
-  LOCAL = "local",
-  DEVELOPMENT = "development",
-  PRODUCTION = "production",
-}
-
 export enum TOKEN {
   ACCESS = "access",
   REFRESH = "refresh",

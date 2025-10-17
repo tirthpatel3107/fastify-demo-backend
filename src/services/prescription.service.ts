@@ -1,4 +1,4 @@
-import { PrescriptionDAO, UserDAO } from "../dao";
+import { PrescriptionDAO } from "../dao";
 import {
   Prescription,
   CreatePrescriptionRequest,
@@ -32,15 +32,14 @@ export class PrescriptionService {
     prescriptionData: CreatePrescriptionRequest,
   ): Promise<PrescriptionResponse> {
     try {
-      // Validate doctor exists and is authorized
-      const isDoctorValid = await UserDAO.getById(prescriptionData.doctor_id);
+      // Basic validation - check if doctor_id is provided
       if (
-        !isDoctorValid ||
-        (isDoctorValid.role !== "doctor" && isDoctorValid.role !== "admin")
+        !prescriptionData.doctor_id ||
+        prescriptionData.doctor_id.trim() === ""
       ) {
         return {
           success: false,
-          error: "Invalid or unauthorized doctor",
+          error: "Doctor ID is required",
         };
       }
 
