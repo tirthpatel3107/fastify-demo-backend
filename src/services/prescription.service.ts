@@ -87,11 +87,6 @@ export class PrescriptionService {
     }
   }
 
-
-
-
-
-
   /**
    * Get all prescriptions with pagination
    */
@@ -154,5 +149,4 @@ export class PrescriptionService {
       };
     }
   }
-
 }

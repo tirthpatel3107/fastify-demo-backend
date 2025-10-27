@@ -9,7 +9,7 @@ export class PrescriptionIssueController {
    */
   static async getAllPrescriptions(
     request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const { limit = 10, skip = 0 } = request.query as {
@@ -19,7 +19,7 @@ export class PrescriptionIssueController {
 
       const result = await PrescriptionService.getAllPrescriptions(
         Number(limit),
-        Number(skip)
+        Number(skip),
       );
 
       if (!result.success) {
@@ -128,14 +128,14 @@ export class PrescriptionIssueController {
 
       logger.info(
         "Issuing prescription with SignatureRx payload:",
-        JSON.stringify(signatureRxPayload, null, 2)
+        JSON.stringify(signatureRxPayload, null, 2),
       );
 
       // Issue prescription via SignatureRx API
       const signatureRxResponse =
         await SignatureRxService.issuePrescriptionForDelivery(
           signatureRxPayload,
-          request.server.config
+          request.server.config,
         );
 
       if (!signatureRxResponse.success) {
@@ -168,13 +168,12 @@ export class PrescriptionIssueController {
         status: "Sent" as const,
       };
 
-      const prescriptionResult = await PrescriptionService.createPrescription(
-        prescriptionRequest
-      );
+      const prescriptionResult =
+        await PrescriptionService.createPrescription(prescriptionRequest);
 
       if (!prescriptionResult.success) {
         logger.error(
-          `Failed to store prescription in database: ${prescriptionResult.error}`
+          `Failed to store prescription in database: ${prescriptionResult.error}`,
         );
         return reply.code(STATUS.SERVER_ERROR).send({
           success: false,
@@ -184,7 +183,7 @@ export class PrescriptionIssueController {
       }
 
       logger.info(
-        `Prescription issued successfully: ${prescriptionResult.data?.id}`
+        `Prescription issued successfully: ${prescriptionResult.data?.id}`,
       );
 
       return reply.code(STATUS.CREATE).send({
@@ -213,7 +212,7 @@ export class PrescriptionIssueController {
    */
   static async getPrescriptionStatus(
     request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const { id } = request.params as { id: string };
@@ -225,9 +224,8 @@ export class PrescriptionIssueController {
         });
       }
 
-      const prescriptionResult = await PrescriptionService.getPrescriptionById(
-        id
-      );
+      const prescriptionResult =
+        await PrescriptionService.getPrescriptionById(id);
 
       if (!prescriptionResult.success) {
         return reply.code(STATUS.NOT_FOUND).send({
@@ -266,7 +264,7 @@ export class PrescriptionIssueController {
    */
   static async getAvailableMedicines(
     _request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       // Medicine data from Blinx Healthcare assessment
@@ -407,7 +405,7 @@ export class PrescriptionIssueController {
    */
   static async getMockPatientData(
     _request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       // Mock patient data in SignatureRx format

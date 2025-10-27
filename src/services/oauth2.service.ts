@@ -88,7 +88,7 @@ export class OAuth2Service {
             Accept: "application/json",
           },
           timeout: 10000, // 10 seconds timeout
-        }
+        },
       );
 
       if (response.status === 200 && response.data.access_token) {
@@ -97,7 +97,7 @@ export class OAuth2Service {
         return response.data;
       } else {
         throw new Error(
-          `Invalid token response: ${JSON.stringify(response.data)}`
+          `Invalid token response: ${JSON.stringify(response.data)}`,
         );
       }
     } catch (error: any) {

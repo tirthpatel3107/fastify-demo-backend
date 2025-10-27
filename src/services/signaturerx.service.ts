@@ -79,14 +79,14 @@ export class SignatureRxService {
    */
   static async issuePrescriptionForDelivery(
     prescriptionData: SignatureRxPrescriptionRequest,
-    config?: any
+    config?: any,
   ): Promise<SignatureRxPrescriptionResponse> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         logger.info(
-          `Attempting to issue prescription (attempt ${attempt}/${this.MAX_RETRIES})`
+          `Attempting to issue prescription (attempt ${attempt}/${this.MAX_RETRIES})`,
         );
 
         // Get valid OAuth2 token
@@ -117,7 +117,7 @@ export class SignatureRxService {
 
         if (response.status === 200 || response.status === 201) {
           logger.info(
-            `Prescription issued successfully: ${response.data.data?.id}`
+            `Prescription issued successfully: ${response.data.data?.id}`,
           );
           return response.data;
         } else {
@@ -129,14 +129,14 @@ export class SignatureRxService {
         if (error.response) {
           logger.error(`HTTP Error Status: ${error.response.status}`);
           logger.error(
-            `Error Response Data: ${JSON.stringify(error.response.data)}`
+            `Error Response Data: ${JSON.stringify(error.response.data)}`,
           );
           logger.error(`Request URL: ${error.config?.url}`);
           logger.error(`Request Method: ${error.config?.method}`);
         }
 
         logger.error(
-          `Prescription issue attempt ${attempt} failed: ${error.message}`
+          `Prescription issue attempt ${attempt} failed: ${error.message}`,
         );
 
         // Check if this is a token-related error that we can retry
@@ -164,7 +164,7 @@ export class SignatureRxService {
 
     // All retries failed
     logger.error(
-      `All prescription issue attempts failed. Last error: ${lastError?.message}`
+      `All prescription issue attempts failed. Last error: ${lastError?.message}`,
     );
     return {
       success: false,
@@ -235,7 +235,7 @@ export class SignatureRxService {
    * Test the connection to SignatureRx API
    */
   static async testConnection(
-    config?: any
+    config?: any,
   ): Promise<{ success: boolean; message: string }> {
     try {
       await OAuth2Service.getValidToken(config);

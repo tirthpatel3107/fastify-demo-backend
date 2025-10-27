@@ -13,7 +13,7 @@ const ConfigSchema = Type.Strict(
     SIGNATURERX_BASE_URL: Type.String(),
     SIGNATURERX_PRESCRIPTIONS_URL: Type.String(),
     PORT: Type.Optional(Type.String()),
-  })
+  }),
 );
 
 type Config = Static<typeof ConfigSchema>;
@@ -26,7 +26,7 @@ declare module "fastify" {
 
 const buildFastifyEnv = async (
   server: FastifyInstance,
-  _options: Record<string, any>
+  _options: Record<string, any>,
 ) => {
   const schema = {
     type: "object",

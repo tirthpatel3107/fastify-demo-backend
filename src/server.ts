@@ -20,16 +20,16 @@ const start = async () => {
 // Graceful shutdown handling
 const gracefulShutdown = async (signal: string) => {
   logger.info(`📴 Received ${signal}. Starting graceful shutdown...`);
-  
+
   try {
     // Close the Fastify server
     await app.close();
     logger.info("✅ Fastify server closed");
-    
+
     // Close MongoDB connection
     await mongoose.connection.close();
     logger.info("✅ MongoDB connection closed");
-    
+
     logger.info("✅ Graceful shutdown completed");
     process.exit(0);
   } catch (err) {
@@ -39,7 +39,7 @@ const gracefulShutdown = async (signal: string) => {
 };
 
 // Handle shutdown signals
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 start();
