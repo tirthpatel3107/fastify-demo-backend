@@ -22,9 +22,6 @@ export interface SignatureRxPrescriptionRequest {
   patient: {
     first_name: string;
     last_name: string;
-    gender: string;
-    email: string;
-    phone: string;
     birth_day: string;
     birth_month: string;
     birth_year: string;
@@ -33,17 +30,20 @@ export interface SignatureRxPrescriptionRequest {
     city: string;
     post_code: string;
     country: string;
-    client_ref_id: string;
+    gender?: string;
+    email?: string;
+    phone?: string;
+    client_ref_id?: string;
   };
   notes: string;
   client_ref_id: string;
   medicines: Array<{
     object: string;
     id: number;
-    VPID: string;
-    APID: string;
-    VPPID: string;
-    APPID: string;
+    VPID?: string;
+    APID?: string;
+    VPPID?: string;
+    APPID?: string;
     description: string;
     qty: string;
     directions: string;
@@ -79,14 +79,14 @@ export class SignatureRxService {
    */
   static async issuePrescriptionForDelivery(
     prescriptionData: SignatureRxPrescriptionRequest,
-    config?: any,
+    config?: any
   ): Promise<SignatureRxPrescriptionResponse> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         logger.info(
-          `Attempting to issue prescription (attempt ${attempt}/${this.MAX_RETRIES})`,
+          `Attempting to issue prescription (attempt ${attempt}/${this.MAX_RETRIES})`
         );
 
         // Get valid OAuth2 token
@@ -105,7 +105,6 @@ export class SignatureRxService {
 
         const apiUrl = `${baseUrl}${prescriptionsUrl}`;
 
-        // Make the API call
         const response: AxiosResponse<SignatureRxPrescriptionResponse> =
           await axios.post(apiUrl, prescriptionData, {
             headers: {
@@ -118,7 +117,7 @@ export class SignatureRxService {
 
         if (response.status === 200 || response.status === 201) {
           logger.info(
-            `Prescription issued successfully: ${response.data.data?.id}`,
+            `Prescription issued successfully: ${response.data.data?.id}`
           );
           return response.data;
         } else {
@@ -126,8 +125,18 @@ export class SignatureRxService {
         }
       } catch (error: any) {
         lastError = error;
+
+        if (error.response) {
+          logger.error(`HTTP Error Status: ${error.response.status}`);
+          logger.error(
+            `Error Response Data: ${JSON.stringify(error.response.data)}`
+          );
+          logger.error(`Request URL: ${error.config?.url}`);
+          logger.error(`Request Method: ${error.config?.method}`);
+        }
+
         logger.error(
-          `Prescription issue attempt ${attempt} failed: ${error.message}`,
+          `Prescription issue attempt ${attempt} failed: ${error.message}`
         );
 
         // Check if this is a token-related error that we can retry
@@ -155,7 +164,7 @@ export class SignatureRxService {
 
     // All retries failed
     logger.error(
-      `All prescription issue attempts failed. Last error: ${lastError?.message}`,
+      `All prescription issue attempts failed. Last error: ${lastError?.message}`
     );
     return {
       success: false,
@@ -226,7 +235,7 @@ export class SignatureRxService {
    * Test the connection to SignatureRx API
    */
   static async testConnection(
-    config?: any,
+    config?: any
   ): Promise<{ success: boolean; message: string }> {
     try {
       await OAuth2Service.getValidToken(config);

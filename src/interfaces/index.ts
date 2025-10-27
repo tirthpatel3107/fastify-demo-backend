@@ -51,12 +51,6 @@ export interface CreatePrescriptionRequest {
   doctor_id: string;
 }
 
-export interface UpdatePrescriptionRequest {
-  id: string;
-  status?: "Pending" | "Sent" | "Delivered" | "Failed";
-  payload?: object;
-}
-
 export interface UpdatePrescriptionData {
   status?: "Pending" | "Sent" | "Delivered" | "Failed";
   payload?: object;

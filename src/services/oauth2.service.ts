@@ -9,9 +9,10 @@ export interface OAuth2TokenResponse {
 }
 
 export interface OAuth2ErrorResponse {
-  error: string;
+  error?: string;
   error_description?: string;
   error_uri?: string;
+  message?: string;
 }
 
 export interface CachedToken {
@@ -75,7 +76,6 @@ export class OAuth2Service {
       grant_type: "client_credentials",
       client_id: clientId,
       client_secret: clientSecret,
-      scope: scope,
     });
 
     try {
@@ -88,15 +88,16 @@ export class OAuth2Service {
             Accept: "application/json",
           },
           timeout: 10000, // 10 seconds timeout
-        },
+        }
       );
 
       if (response.status === 200 && response.data.access_token) {
         logger.info("Successfully obtained OAuth2 token from SignatureRx");
+
         return response.data;
       } else {
         throw new Error(
-          `Invalid token response: ${JSON.stringify(response.data)}`,
+          `Invalid token response: ${JSON.stringify(response.data)}`
         );
       }
     } catch (error: any) {
@@ -105,6 +106,7 @@ export class OAuth2Service {
         const errorMessage =
           errorData.error_description ||
           errorData.error ||
+          errorData.message ||
           "Unknown OAuth2 error";
         logger.error(`OAuth2 token request failed: ${errorMessage}`);
         throw new Error(`OAuth2 token request failed: ${errorMessage}`);

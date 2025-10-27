@@ -52,33 +52,6 @@ A Fastify-based backend service for managing prescriptions with SignatureRx API 
 - `GET /api/v1/webhooks/logs` - Get webhook logs
 - `GET /api/v1/webhooks/stats/overview` - Get webhook statistics
 
-## Environment Variables
-
-```env
-# SignatureRx OAuth2 Configuration
-SIGNATURERX_CLIENT_ID=your_client_id_here
-SIGNATURERX_CLIENT_SECRET=your_client_secret_here
-SIGNATURERX_SCOPE=prescriptions:issue
-SIGNATURERX_TOKEN_URL=https://app.signaturerx.co.uk/api/auth/token
-SIGNATURERX_BASE_URL=https://app.signaturerx.co.uk/api
-SIGNATURERX_PRESCRIPTIONS_URL=/prescriptions/issueForDelivery
-
-# MongoDB Configuration
-MONGODB_URI=mongodb://localhost:27017/fastify-demo-backend
-
-# Server Configuration
-PORT=3000
-```
-
-## Frontend Integration
-
-This backend is designed to work with a React + Vite frontend. The frontend can:
-
-1. **Get Medicine List**: Call `GET /prescriptions/medicines` to populate dropdown
-2. **Get Mock Patient**: Call `GET /prescriptions/patient/mock` for testing
-3. **Issue Prescription**: Call `POST /prescriptions/issue` with prescription data
-4. **Check Status**: Call `GET /prescriptions/{id}/status` to check prescription status
-
 ## Architecture
 
 ```
@@ -93,13 +66,3 @@ src/
 ├── route/                 # API routes
 └── utils/                 # Utility functions
 ```
-
-## Development
-
-- **Build**: `npm run build`
-- **Start**: `npm start`
-- **Format**: `npm run format`
-
-## License
-
-ISC

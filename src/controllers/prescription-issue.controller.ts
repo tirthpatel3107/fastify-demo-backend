@@ -9,14 +9,17 @@ export class PrescriptionIssueController {
    */
   static async getAllPrescriptions(
     request: FastifyRequest,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     try {
-      const { limit = 10, skip = 0 } = request.query as { limit?: number; skip?: number };
+      const { limit = 10, skip = 0 } = request.query as {
+        limit?: number;
+        skip?: number;
+      };
 
       const result = await PrescriptionService.getAllPrescriptions(
         Number(limit),
-        Number(skip),
+        Number(skip)
       );
 
       if (!result.success) {
@@ -48,42 +51,62 @@ export class PrescriptionIssueController {
    */
   static async issuePrescription(request: FastifyRequest, reply: FastifyReply) {
     try {
-      // Get request body (simplified validation for this prototype)
-      // const requestData = request.body as any; // Currently unused
+      // Get request body
+      const requestData = request.body as {
+        patientName: string;
+        dob: string;
+        address: string;
+        medication: string;
+        dosage: string;
+        deliveryType: string;
+      };
 
-      // Create SignatureRx payload using the exact format from the assessment
-      const signatureRxPayload = {
+      // Parse the DOB
+      const dobDate = new Date(requestData.dob);
+      const birth_day = String(dobDate.getDate()).padStart(2, "0");
+      const birth_month = String(dobDate.getMonth() + 1).padStart(2, "0");
+      const birth_year = String(dobDate.getFullYear());
+
+      const nameParts = requestData.patientName.trim().split(/\s+/);
+      const first_name = nameParts[0] || "Unknown";
+      const last_name =
+        nameParts.length > 1 ? nameParts.slice(1).join(" ") : "Unknown";
+
+      const addressParts = requestData.address
+        .split(",")
+        .map((part) => part.trim());
+      const address_ln1 = addressParts[0] || requestData.address;
+      const city =
+        addressParts.length > 1 ? addressParts[addressParts.length - 2] : "";
+      const post_code =
+        addressParts.length > 1 ? addressParts[addressParts.length - 1] : "";
+
+      // Create SignatureRx payload using actual data
+      const signatureRxPayload: any = {
         action: "issueForDelivery",
-        contact_id: 0,
-        clinic_id: 842,
-        aff_tag: "Blinx PACO",
-        secure_pin: "111111",
-        notify: true,
-        send_sms: true,
-        invoice_clinic: false,
         delivery_address: {
-          address_ln1: "Address line 1",
+          address_ln1: address_ln1,
           address_ln2: "",
-          city: "BLABLA",
-          post_code: "BL512",
+          city: city || "London",
+          post_code: post_code || "SW1A",
           country: "United Kingdom",
         },
         prescription_id: "",
         patient: {
-          first_name: "Pooja",
-          last_name: "TR",
-          gender: "female",
-          email: "pooja+1133@signaturerx.co.uk",
-          phone: "441234567890",
-          birth_day: "10",
-          birth_month: "01",
-          birth_year: "1990",
-          address_ln1: "Address line 1",
+          first_name: first_name,
+          last_name: last_name,
+          birth_day: birth_day,
+          birth_month: birth_month,
+          birth_year: birth_year,
+          address_ln1: address_ln1,
           address_ln2: "",
-          city: "BLABLA",
-          post_code: "SW1A",
+          city: city || "London",
+          post_code: post_code || "SW1A",
           country: "United Kingdom",
-          client_ref_id: "testingclientref",
+          gender: "",
+          email: "",
+          phone: "",
+          client_ref_id: "",
         },
         notes: "",
         client_ref_id: "",
@@ -91,28 +114,28 @@ export class PrescriptionIssueController {
           {
             object: "medicine",
             id: 0,
-            VPID: "42089511000001103",
+            VPID: "",
             APID: "",
             VPPID: "",
             APPID: "",
-            description: "Sildenafil 25mg tablets",
-            qty: "10",
-            directions: "as told",
+            description: requestData.medication,
+            qty: "1",
+            directions: requestData.dosage,
           },
         ],
-        prescriber_ip: "11.17.271.86",
+        // prescriber_ip: "11.17.271.86",
       };
 
       logger.info(
         "Issuing prescription with SignatureRx payload:",
-        JSON.stringify(signatureRxPayload, null, 2),
+        JSON.stringify(signatureRxPayload, null, 2)
       );
 
       // Issue prescription via SignatureRx API
       const signatureRxResponse =
         await SignatureRxService.issuePrescriptionForDelivery(
           signatureRxPayload,
-          request.server.config,
+          request.server.config
         );
 
       if (!signatureRxResponse.success) {
@@ -145,12 +168,13 @@ export class PrescriptionIssueController {
         status: "Sent" as const,
       };
 
-      const prescriptionResult =
-        await PrescriptionService.createPrescription(prescriptionRequest);
+      const prescriptionResult = await PrescriptionService.createPrescription(
+        prescriptionRequest
+      );
 
       if (!prescriptionResult.success) {
         logger.error(
-          `Failed to store prescription in database: ${prescriptionResult.error}`,
+          `Failed to store prescription in database: ${prescriptionResult.error}`
         );
         return reply.code(STATUS.SERVER_ERROR).send({
           success: false,
@@ -160,7 +184,7 @@ export class PrescriptionIssueController {
       }
 
       logger.info(
-        `Prescription issued successfully: ${prescriptionResult.data?.id}`,
+        `Prescription issued successfully: ${prescriptionResult.data?.id}`
       );
 
       return reply.code(STATUS.CREATE).send({
@@ -189,7 +213,7 @@ export class PrescriptionIssueController {
    */
   static async getPrescriptionStatus(
     request: FastifyRequest,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     try {
       const { id } = request.params as { id: string };
@@ -201,8 +225,9 @@ export class PrescriptionIssueController {
         });
       }
 
-      const prescriptionResult =
-        await PrescriptionService.getPrescriptionById(id);
+      const prescriptionResult = await PrescriptionService.getPrescriptionById(
+        id
+      );
 
       if (!prescriptionResult.success) {
         return reply.code(STATUS.NOT_FOUND).send({
@@ -241,7 +266,7 @@ export class PrescriptionIssueController {
    */
   static async getAvailableMedicines(
     _request: FastifyRequest,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     try {
       // Medicine data from Blinx Healthcare assessment
@@ -382,7 +407,7 @@ export class PrescriptionIssueController {
    */
   static async getMockPatientData(
     _request: FastifyRequest,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     try {
       // Mock patient data in SignatureRx format
